@@ -11,26 +11,28 @@ const LoginComponent: React.FC<LoginComponentProps> = ({ onLoginSuccess }) => {
 
   // Define the mutation for the login process
   const loginMutation = useMutation(async () => {
+
+    onLoginSuccess()
     // Simulate a login API call
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    });
+  //   const response = await fetch('/api/login', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify({ email, password }),
+  //   });
 
-    if (!response.ok) throw new Error('Login failed');
+  //   if (!response.ok) throw new Error('Login failed');
 
-    return response.json();
-  }, {
-    onSuccess: (data) => {
-      console.log('Login successful:', data);
-      onLoginSuccess();
-    },
-    onError: (error: Error) => {
-      alert(error.message);
-    }
+  //   return response.json();
+  // }, {
+  //   onSuccess: (data) => {
+  //     console.log('Login successful:', data);
+  //     onLoginSuccess();
+  //   },
+  //   onError: (error: Error) => {
+  //     alert(error.message);
+  //   }
   });
 
   const handleLogin = (e: FormEvent<HTMLFormElement>) => {
@@ -39,14 +41,14 @@ const LoginComponent: React.FC<LoginComponentProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 flex flex-col">
+    <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 flex flex-col h-1/3 w-1/2 justify-center items-center ">
       <form onSubmit={handleLogin}>
         <div className="mb-4">
-          <label className="block text-grey-darker text-sm font-bold mb-2" htmlFor="username">
+          <label className="block text-black text-sm font-bold mb-2" htmlFor="username">
             Email
           </label>
           <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker"
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-black"
             id="username"
             type="email"
             placeholder="Email"
@@ -55,11 +57,11 @@ const LoginComponent: React.FC<LoginComponentProps> = ({ onLoginSuccess }) => {
           />
         </div>
         <div className="mb-6">
-          <label className="block text-grey-darker text-sm font-bold mb-2" htmlFor="password">
+          <label className="block text-black text-sm font-bold mb-2" htmlFor="password">
             Password
           </label>
           <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker mb-3"
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-black mb-3"
             id="password"
             type="password"
             placeholder="******************"
