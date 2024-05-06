@@ -1,4 +1,6 @@
+import Header from '@/components/Header';
 import { useState } from 'react';
+// import { useUser } from '@/contexts/UserContext'; will update this with network requests
 
 interface Track {
   title: string;
@@ -8,6 +10,7 @@ interface Track {
 }
 
 export default function CreateShow() {
+    // const { user }:any = useUser(); // Accessing the user from context
   const [showTitle, setShowTitle] = useState('');
   const [showDescription, setShowDescription] = useState('');
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -28,6 +31,7 @@ export default function CreateShow() {
 
   const saveShow = () => {
     const showData = {
+      host: "KC & JOE JOE",
       title: showTitle,
       description: showDescription,
       tracks
@@ -36,8 +40,12 @@ export default function CreateShow() {
     // Placeholder for server request
   };
 
+
+  // if (!user) return <div>Please log in to create a show.</div>; // Guard clause for authentication
+
   return (
-    <div className="p-8">
+    <div className="p-8 bg-black h-full">
+      <Header title="Melody Mixer Network" />
       <h1 className="text-2xl font-bold mb-4">Create a New Show</h1>
       <div>
         <label className="block text-sm font-bold mb-2" htmlFor="hostname">Host Name</label>
@@ -101,9 +109,12 @@ export default function CreateShow() {
         <button onClick={addTrack} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
           Add Track
         </button>
+        <button className="ml-6 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          Upload Track
+        </button>
       </div>
       <div className="mt-8">
-        <h3 className="text-lg font-bold">Current Tracks</h3>
+        <h3 className="text-lg font-bold h-full">Current Tracks</h3>
         {tracks.map((track, index) => (
           <div key={index} className="mt-2 p-2 border rounded">
             <p><strong>Title:</strong> {track.title}</p>

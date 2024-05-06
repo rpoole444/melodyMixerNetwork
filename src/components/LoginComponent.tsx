@@ -1,5 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useMutation } from 'react-query';
+import { useUser } from '@/contexts/UserContext';
+
 
 interface LoginComponentProps {
   onLoginSuccess: () => void;
@@ -8,6 +10,7 @@ interface LoginComponentProps {
 const LoginComponent: React.FC<LoginComponentProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  // const { login }:any = useUser();
 
   // Define the mutation for the login process
   const loginMutation = useMutation(async () => {
@@ -33,17 +36,21 @@ const LoginComponent: React.FC<LoginComponentProps> = ({ onLoginSuccess }) => {
   //   onError: (error: Error) => {
   //     alert(error.message);
   //   }
+  // console.log('Login successful:', data);
+      onLoginSuccess();
   });
 
   const handleLogin = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     loginMutation.mutate(); // Trigger the mutation
+    // login()
   };
 
   return (
-    <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 flex flex-col h-1/3 w-1/2 justify-center items-center ">
+    <div className="bg-white shadow-md rounded px-8 pt-6 mt-40 pb-8 mb-4 flex flex-col h-1/3 w-1/3 justify-center items-center ">
       <form onSubmit={handleLogin}>
         <div className="mb-4">
+          <h2 className="block text-black text-sm font-bold mb-2"> Log in Here!</h2>
           <label className="block text-black text-sm font-bold mb-2" htmlFor="username">
             Email
           </label>
@@ -85,7 +92,7 @@ const LoginComponent: React.FC<LoginComponentProps> = ({ onLoginSuccess }) => {
             Forgot Password?
           </a>
         <p className="mt-4 text-black">
-          Need an account? <a href="/register" className="text-blue-500 hover:text-blue-700">Register</a>
+          Need an account? <a href="/Registration" className="text-blue-500 hover:text-blue-700">Register</a>
         </p>
       </form>
     </div>
