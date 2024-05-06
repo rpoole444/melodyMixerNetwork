@@ -15,7 +15,11 @@
     --background-end-rgb: 0, 0, 0;
   }
 }
-
+.body-bg {
+  background-image: url('../../public/record-room.jpg');
+  background-size: cover;
+  background-position: center;
+}
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
