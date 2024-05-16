@@ -47,10 +47,10 @@ const LoginComponent: React.FC<LoginComponentProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="bg-white shadow-md rounded px-8 pt-6 mt-40 pb-8 mb-4 flex flex-col h-1/3 w-1/3 justify-center items-center ">
+    <div className="bg-white shadow-md rounded px-8 pt-3 mt-10 pb-8 mb-4 flex flex-col h-1/2 w-1/3 justify-center items-center ">
       <form onSubmit={handleLogin}>
+        <h2 className="inline-block align-baseline font-bold text-xl text-black mb-5 p-5">Please Sign In To Start Your Journey</h2>
         <div className="mb-4">
-          <h2 className="block text-black text-sm font-bold mb-2"> Log in Here!</h2>
           <label className="block text-black text-sm font-bold mb-2" htmlFor="username">
             Email
           </label>
