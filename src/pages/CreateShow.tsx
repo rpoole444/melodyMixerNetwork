@@ -1,15 +1,20 @@
+'use client'
 import Header from '@/components/Header';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 // import { useUser } from '@/contexts/UserContext'; will update this with network requests
+import { useEdgeStore } from '@/lib/edgestore';
 
 interface Track {
   title: string;
   artist: string;
   length: string;
   details?: string;
+  fileUrl?: string;
 }
 
 export default function CreateShow() {
+    const { edgestore }  = useEdgeStore();
+   
     // const { user }:any = useUser(); // Accessing the user from context
   const [showTitle, setShowTitle] = useState('');
   const [showDescription, setShowDescription] = useState('');
@@ -19,14 +24,60 @@ export default function CreateShow() {
   const [trackArtist, setTrackArtist] = useState('');
   const [trackLength, setTrackLength] = useState('');
   const [trackDetails, setTrackDetails] = useState('');
+  const [trackFile, setTrackFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const addTrack = () => {
-    const newTrack = { title: trackTitle, artist: trackArtist, length: trackLength, details: trackDetails };
-    setTracks([...tracks, newTrack]);
-    setTrackTitle('');
-    setTrackArtist('');
-    setTrackLength('');
-    setTrackDetails('');
+
+  const handleFileChange = (files: FileList | null) => {
+    console.log('Handle file changes:', files);
+    if (files && files[0]) {
+      setTrackFile(files[0]);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const files = e.dataTransfer.files;
+    handleFileChange(files);
+  };
+
+  const addTrack = async () => {
+     if (trackFile) {
+      setIsUploading(true);
+      try {
+       console.log('Uploading - edgestore: ', edgestore)
+        const response = await edgestore.publicFiles.upload({
+          file: trackFile,
+          onProgressChange: (progress) => {
+                // you can use this to show a progress bar
+                console.log(progress);
+              },
+        });
+        const newTrack = {
+          title: trackTitle,
+          artist: trackArtist,
+          length: trackLength,
+          details: trackDetails,
+          fileUrl: response.url,
+        };
+        
+        setTracks([...tracks, newTrack]);
+        setTrackTitle('');
+        setTrackArtist('');
+        setTrackLength('');
+        setTrackDetails('');
+        setTrackFile(null);
+      } catch (error) {
+        console.error('Error uploading track:', error);
+      } finally {
+        setIsUploading(false);
+      }
+    }
   };
 
   const saveShow = () => {
@@ -39,7 +90,6 @@ export default function CreateShow() {
     console.log('Saving show:', showData);
     // Placeholder for server request
   };
-
 
   // if (!user) return <div>Please log in to create a show.</div>; // Guard clause for authentication
 
@@ -79,6 +129,7 @@ export default function CreateShow() {
       <div className="mt-8">
         <h2 className="text-xl font-bold mb-4">Add Track</h2>
         <input
+          name='Track Title'
           type="text"
           value={trackTitle}
           onChange={(e) => setTrackTitle(e.target.value)}
@@ -86,6 +137,7 @@ export default function CreateShow() {
           className="shadow border rounded w-full py-2 px-3 text-gray-700 mb-4"
         />
         <input
+          name='Track Artist'
           type="text"
           value={trackArtist}
           onChange={(e) => setTrackArtist(e.target.value)}
@@ -93,6 +145,7 @@ export default function CreateShow() {
           className="shadow border rounded w-full py-2 px-3 text-gray-700 mb-4"
         />
         <input
+          name='Track Length'
           type="text"
           value={trackLength}
           onChange={(e) => setTrackLength(e.target.value)}
@@ -100,17 +153,41 @@ export default function CreateShow() {
           className="shadow border rounded w-full py-2 px-3 text-gray-700 mb-4"
         />
         <textarea
+          name='Track Details'
           value={trackDetails}
           onChange={(e) => setTrackDetails(e.target.value)}
           placeholder="Track Details (optional)"
           className="shadow border rounded w-full py-2 px-3 text-gray-700 mb-4"
           rows={2}
         />
-        <button onClick={addTrack} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          Add Track
-        </button>
-        <button className="ml-6 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          Upload Track
+        <div
+          className="shadow border rounded w-full py-8 px-3 text-gray-700 mb-4 flex items-center justify-center bg-gray-200"
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={(e) => handleFileChange(e.target.files)}
+            className="hidden"
+          />
+          <button
+            onClick={() => {
+              fileInputRef.current?.click()
+            }}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            {trackFile ? trackFile.name : 'Drag & Drop or Click to Upload Track'}
+          </button>
+        </div>
+        <button
+          onClick={addTrack}
+          disabled={!trackFile || isUploading}
+          className={`ml-6 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ${
+            !trackFile ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        >
+          {isUploading ? 'Uploading...' : 'Add Track'}
         </button>
       </div>
       <div className="mt-8">
