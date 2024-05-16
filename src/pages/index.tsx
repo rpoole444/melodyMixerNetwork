@@ -23,6 +23,9 @@ export default function Home() {
           <div className="bg-black bg-opacity-70 p-5 rounded">
             <h1 className="text-3xl font-bold text-white">Welcome to Melody Mixers Network</h1>
           </div>
+          <div className="bg-black bg-opacity-70 p-5 rounded mt-10">
+            <h1 className="text-3xl font-bold text-white">Login</h1>
+          </div>
           <LoginComponent onLoginSuccess={handleLoginSuccess} />
         </div>
       ) : (
