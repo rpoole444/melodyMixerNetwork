@@ -27,6 +27,7 @@ export default function CreateShow() {
   const [trackFile, setTrackFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
 
   const handleFileChange = (files: FileList | null) => {
@@ -49,13 +50,14 @@ export default function CreateShow() {
   const addTrack = async () => {
      if (trackFile) {
       setIsUploading(true);
+      setUploadProgress(0);
       try {
        console.log('Uploading - edgestore: ', edgestore)
         const response = await edgestore.publicFiles.upload({
           file: trackFile,
           onProgressChange: (progress) => {
                 // you can use this to show a progress bar
-                console.log(progress);
+               setUploadProgress(progress);
               },
         });
         const newTrack = {
@@ -96,14 +98,14 @@ export default function CreateShow() {
   return (
     <div className="p-8 bg-black h-full">
       <Header title="Melody Mixer Network" />
-      <h1 className="text-2xl font-bold mb-4">Create a New Show</h1>
-      <div>
+      <div className='flex justify-center flex-col items-center'>
+        <h1 className="text-2xl font-bold mb-4 text-white mt-10">Create a New Show</h1>
         <label className="block text-sm font-bold mb-2" htmlFor="hostname">Host Name</label>
         <input
           type="text"
           value="Hardcoded Hostname"
           id="hostname"
-          className="shadow border rounded w-full py-2 px-3 text-gray-700 mb-4"
+          className="shadow border rounded w-2/3 py-2 px-3 text-gray-700 mb-4"
           disabled
         />
         <label className="block text-sm font-bold mb-2" htmlFor="showTitle">Show Title</label>
@@ -112,21 +114,21 @@ export default function CreateShow() {
           value={showTitle}
           onChange={(e) => setShowTitle(e.target.value)}
           id="showTitle"
-          className="shadow border rounded w-full py-2 px-3 text-gray-700 mb-4"
+          className="shadow border rounded w-2/3 py-2 px-3 text-gray-700 mb-4"
         />
         <label className="block text-sm font-bold mb-2" htmlFor="showDescription">Show Description</label>
         <textarea
           value={showDescription}
           onChange={(e) => setShowDescription(e.target.value)}
           id="showDescription"
-          className="shadow border rounded w-full py-2 px-3 text-gray-700 mb-4"
+          className="shadow border rounded w-2/3 py-2 px-3 text-gray-700 mb-4"
           rows={3}
         />
         <button onClick={saveShow} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
           Save Show
         </button>
       </div>
-      <div className="mt-8">
+      <div className="mt-8 flex justify-center flex-col items-center">
         <h2 className="text-xl font-bold mb-4">Add Track</h2>
         <input
           name='Track Title'
@@ -134,7 +136,7 @@ export default function CreateShow() {
           value={trackTitle}
           onChange={(e) => setTrackTitle(e.target.value)}
           placeholder="Track Title"
-          className="shadow border rounded w-full py-2 px-3 text-gray-700 mb-4"
+          className="shadow border rounded w-2/3 py-2 px-3 text-gray-700 mb-4"
         />
         <input
           name='Track Artist'
@@ -142,7 +144,7 @@ export default function CreateShow() {
           value={trackArtist}
           onChange={(e) => setTrackArtist(e.target.value)}
           placeholder="Artist"
-          className="shadow border rounded w-full py-2 px-3 text-gray-700 mb-4"
+          className="shadow border rounded w-2/3 py-2 px-3 text-gray-700 mb-4"
         />
         <input
           name='Track Length'
@@ -150,18 +152,18 @@ export default function CreateShow() {
           value={trackLength}
           onChange={(e) => setTrackLength(e.target.value)}
           placeholder="Track Length"
-          className="shadow border rounded w-full py-2 px-3 text-gray-700 mb-4"
+          className="shadow border rounded w-2/3 py-2 px-3 text-gray-700 mb-4"
         />
         <textarea
           name='Track Details'
           value={trackDetails}
           onChange={(e) => setTrackDetails(e.target.value)}
           placeholder="Track Details (optional)"
-          className="shadow border rounded w-full py-2 px-3 text-gray-700 mb-4"
+          className="shadow border rounded w-2/3 py-2 px-3 text-gray-700 mb-4"
           rows={2}
         />
         <div
-          className="shadow border rounded w-full py-8 px-3 text-gray-700 mb-4 flex items-center justify-center bg-gray-200"
+          className="shadow border bg-neutral-700 rounded w-2/3 py-8 px-3 text-gray-700 mb-4 flex items-center justify-center bg-gray-200"
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
@@ -175,7 +177,7 @@ export default function CreateShow() {
             onClick={() => {
               fileInputRef.current?.click()
             }}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-blue-500 hover:bg-blue-700 text-l font-bold py-2 px-4 rounded"
           >
             {trackFile ? trackFile.name : 'Drag & Drop or Click to Upload Track'}
           </button>
@@ -189,6 +191,16 @@ export default function CreateShow() {
         >
           {isUploading ? 'Uploading...' : 'Add Track'}
         </button>
+        {isUploading && (
+          <div className="w-2/3 bg-gray-200 rounded mt-4">
+            <div
+              className="bg-blue-500 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded"
+              style={{ width: `${uploadProgress}%` }}
+            >
+              {uploadProgress}%
+            </div>
+          </div>
+        )}
       </div>
       <div className="mt-8">
         <h3 className="text-lg font-bold h-full">Current Tracks</h3>
@@ -197,6 +209,12 @@ export default function CreateShow() {
             <p><strong>Title:</strong> {track.title}</p>
             <p><strong>Artist:</strong> {track.artist}</p>
             <p><strong>Length:</strong> {track.length}</p>
+            <p className='p-5'><strong>Track:</strong> 
+            <audio controls>
+              <source src={track.fileUrl} type="audio/mpeg" />
+              Your browser does not support the audio element.
+            </audio>
+            </p>
             {track.details && <p><strong>Details:</strong> {track.details}</p>}
           </div>
         ))}
