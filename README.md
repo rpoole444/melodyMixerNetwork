@@ -75,8 +75,9 @@ Melody Mixer Network allows radio show hosts to seamlessly create personalized p
 
 ## Authors
 
-Frontend Engineer - Reid Poole
-Backend Engineer - Nathan Lambertson
+Frontend Engineer - Reid Poole;
+</br>
+Backend Engineer - Nathan Lambertson;
 
 <table>
     <tr>
