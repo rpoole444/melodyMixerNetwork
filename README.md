@@ -80,8 +80,12 @@ Backend Engineer - Nathan Lambertson
 
 <table>
     <tr>
-      <td> Reid Poole <a href="https://github.com/rpoole444">GH</a></td>
+      <td> Reid Poole <a href="https://github.com/lambo1986">GH</a></td>
     </tr>
-<td><img src="https://github.com/rpoole444/melodyMixerNetwork/assets/111818942/c91e49d8-e9f0-4974-a2cc-c5c049c940ca" alt="Reid Poole"
+  <tr>
+      <td> Nathan Lambertson <a href="https://github.com/rpoole444">GH</a></td>
+    </tr>
+<td><img src="https://github.com/rpoole444/melodyMixerNetwork/assets/111818942/527b7b4c-861a-4248-989c-5bb99d44d9b6" alt="Nathan Lambertson"
  width="150" height="auto" /></td>
+
 </table>
