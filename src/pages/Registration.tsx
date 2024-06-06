@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import Header from '@/components/Header';
+import { createUser } from './api/route';
 import "../styles/globals.css";
 
 interface User {
@@ -26,17 +28,30 @@ const RegistrationPage = () => {
   });
 
   const [errors, setErrors] = useState<any>({});
+  const [successMessage, setSuccessMessage] = useState<string>('');
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setUser({ ...user, [name]: value });
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (validateForm()) {
-      console.log('User registration data:', user);
-      // Submit data to server or handle it accordingly
+      try {
+        const response = await createUser(user);
+        setSuccessMessage('Registration successful!');
+        console.log('User registration data:', response);
+
+        // Redirect to login page after 3 seconds
+        setTimeout(() => {
+          router.push('/');
+        }, 3000);
+      } catch (error) {
+        console.error('Error during registration:', error);
+        setErrors({ submit: 'Registration failed. Please try again.' });
+      }
     }
   };
 
@@ -70,6 +85,12 @@ const RegistrationPage = () => {
       <div className="flex flex-col items-center justify-center min-h-screen bg-black text-black">
         <form onSubmit={handleSubmit} className="bg-gray-200 p-10 shadow-lg rounded-lg w-full max-w-3xl space-y-6">
           <h2 className="text-center text-3xl font-bold mb-6">Register</h2>
+
+          {successMessage && (
+            <div className="text-green-500 text-center mb-6">
+              {successMessage}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-6">
             <div>
