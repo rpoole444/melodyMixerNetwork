@@ -1,39 +1,84 @@
-import { useRouter } from 'next/router';
-import { useState } from 'react';
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { useUser } from "@/contexts/UserContext";
 
-const Header = ({ title }:any) => {
+type HeaderProps = {
+  title?: string;
+};
+
+const menuItems = [
+  { name: "Dashboard", link: "/" },
+  { name: "Host Profile", link: "/UserProfile" },
+  { name: "Create Show", link: "/CreateShow" },
+  { name: "Register Host", link: "/Registration" },
+];
+
+const Header = ({ title = "Melody Mixer Network" }: HeaderProps) => {
   const router = useRouter();
+  const { user, logout } = useUser();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const menuItems = [
-    { name: "About Melody Mixer Network", link: "/about" },
-    { name: "Radio Show Host Guide and Guidelines", link: "/guide" },
-    { name: "Personal Host Profile", link: "/UserProfile" },
-    { name: "Create a Show", link: "/CreateShow" }
-  ];
-
   return (
-    <header className="w-full bg-black text-white flex justify-between items-center px-5 py-3 fixed top-0 left-0 z-50 h-10vh shadow-md">
-      <button onClick={() => router.back()} className="flex items-center space-x-2">
-        <img src='/arrow-left.png' alt="Back" className="w-4 h-4" />
-        <span>Back</span>
-      </button>
-      <h1 className="text-xl font-bold text-white">{title}</h1>
-      <div className="relative">
-        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
-          Menu
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-zinc-950/95 text-white backdrop-blur">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6">
+        <button
+          onClick={() => router.back()}
+          className="rounded-md border border-white/15 px-3 py-2 text-sm text-zinc-200 hover:border-amber-300 hover:text-white"
+          type="button"
+        >
+          Back
         </button>
-        {isMenuOpen && (
-          <div className="absolute right-0 mt-2 w-48 bg-white text-black shadow-lg rounded-lg">
-            <ul className="text-sm">
-              {menuItems.map((item, index) => (
-                <li key={index} className="px-4 py-2 hover:bg-gray-100" onClick={() => setIsMenuOpen(false)}>
-                  <a href={item.link}>{item.name}</a>
-                </li>
+
+        <Link href="/" className="min-w-0 text-center">
+          <p className="text-xs uppercase tracking-[0.3em] text-amber-300">Radio Operations</p>
+          <h1 className="truncate text-lg font-semibold sm:text-xl">{title}</h1>
+        </Link>
+
+        <div className="relative flex items-center gap-2">
+          {user && (
+            <button
+              type="button"
+              onClick={logout}
+              className="hidden rounded-md border border-white/15 px-3 py-2 text-sm text-zinc-200 hover:border-red-300 hover:text-white sm:block"
+            >
+              Sign Out
+            </button>
+          )}
+          <button
+            onClick={() => setIsMenuOpen((open) => !open)}
+            className="rounded-md bg-amber-300 px-3 py-2 text-sm font-semibold text-zinc-950 hover:bg-amber-200"
+            type="button"
+          >
+            Menu
+          </button>
+          {isMenuOpen && (
+            <nav className="absolute right-0 top-12 w-56 overflow-hidden rounded-md border border-white/10 bg-zinc-900 shadow-2xl">
+              {menuItems.map((item) => (
+                <Link
+                  key={item.link}
+                  href={item.link}
+                  className="block px-4 py-3 text-sm text-zinc-100 hover:bg-zinc-800"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
               ))}
-            </ul>
-          </div>
-        )}
+              {user && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    logout();
+                  }}
+                  className="block w-full px-4 py-3 text-left text-sm text-zinc-100 hover:bg-zinc-800 sm:hidden"
+                >
+                  Sign Out
+                </button>
+              )}
+            </nav>
+          )}
+        </div>
       </div>
     </header>
   );

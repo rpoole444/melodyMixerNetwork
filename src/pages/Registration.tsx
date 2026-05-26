@@ -1,140 +1,126 @@
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import Header from '@/components/Header';
-import { createUser } from './api/route';
-import "../styles/globals.css";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/router";
+import Header from "@/components/Header";
+import { api, RegistrationInput } from "@/lib/api";
 
-interface User {
-  hostName: string;
-  description: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  password: string;
-  confirmPassword: string;
-}
+const emptyUser: RegistrationInput = {
+  hostName: "",
+  description: "",
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  password: "",
+  confirmPassword: "",
+};
 
 const RegistrationPage = () => {
-  const [user, setUser] = useState<User>({
-    hostName: '',
-    description: '',
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: ''
-  });
-
-  const [errors, setErrors] = useState<any>({});
-  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [user, setUser] = useState<RegistrationInput>(emptyUser);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setUser({ ...user, [name]: value });
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (validateForm()) {
-      try {
-        const response = await createUser(user);
-        setSuccessMessage('Registration successful!');
-        console.log('User registration data:', response);
-
-        // Redirect to login page after 3 seconds
-        setTimeout(() => {
-          router.push('/');
-        }, 3000);
-      } catch (error) {
-        console.error('Error during registration:', error);
-        setErrors({ submit: 'Registration failed. Please try again.' });
-      }
-    }
+    setUser((current) => ({ ...current, [name]: value }));
   };
 
   const validateForm = () => {
-    let isValid = true;
-    let errors = {
-      email: "",
-      password: ""
-    };
+    const nextErrors: Record<string, string> = {};
 
-    if (user.password !== user.confirmPassword) {
-      errors.password = "Passwords do not match";
-      isValid = false;
-    }
-    if (user.password.length < 6) {
-      errors.password = "Password must be at least 6 characters long";
-      isValid = false;
-    }
-    if (!user.email.includes('@')) {
-      errors.email = "Invalid email address";
-      isValid = false;
-    }
+    if (!user.hostName.trim()) nextErrors.hostName = "Host name is required.";
+    if (!user.firstName.trim()) nextErrors.firstName = "First name is required.";
+    if (!user.lastName.trim()) nextErrors.lastName = "Last name is required.";
+    if (!user.email.includes("@")) nextErrors.email = "Enter a valid email.";
+    if (user.password.length < 6) nextErrors.password = "Password must be at least 6 characters.";
+    if (user.password !== user.confirmPassword) nextErrors.confirmPassword = "Passwords do not match.";
 
-    setErrors(errors);
-    return isValid;
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+    setMessage("");
+
+    try {
+      await api.register(user);
+      setMessage("Host registration saved. Redirecting to sign in.");
+      setTimeout(() => router.push("/"), 1200);
+    } catch (error) {
+      setErrors({ submit: error instanceof Error ? error.message : "Registration failed." });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <>
-      <Header title="Melody Maker Network Registration" />
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-black">
-        <form onSubmit={handleSubmit} className="bg-gray-200 p-10 shadow-lg rounded-lg w-full max-w-3xl space-y-6">
-          <h2 className="text-center text-3xl font-bold mb-6">Register</h2>
+    <main className="min-h-screen bg-zinc-950 text-white">
+      <Header title="Host Registration" />
+      <section className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
+        <div className="mb-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-amber-300">New Host</p>
+          <h1 className="mt-3 text-4xl font-semibold">Create the host profile the backend expects.</h1>
+          <p className="mt-3 max-w-2xl text-zinc-300">
+            This submits Rails-shaped `user` data to `/api/v1/users` and validates the required fields before the request leaves the browser.
+          </p>
+        </div>
 
-          {successMessage && (
-            <div className="text-green-500 text-center mb-6">
-              {successMessage}
-            </div>
-          )}
+        <form onSubmit={handleSubmit} className="rounded-md border border-white/10 bg-zinc-900 p-5 sm:p-8">
+          {message && <p className="mb-5 rounded-md border border-emerald-400/40 bg-emerald-950/40 p-3 text-emerald-100">{message}</p>}
+          {errors.submit && <p className="mb-5 rounded-md border border-red-400/40 bg-red-950/40 p-3 text-red-100">{errors.submit}</p>}
 
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="hostName" className="block text-sm font-bold mb-2">Host Name</label>
-              <input type="text" name="hostName" id="hostName" value={user.hostName} onChange={handleChange} placeholder="Host Name" className="form-input" />
-            </div>
-            <div>
-              <label htmlFor="description" className="block text-sm font-bold mb-2">Description</label>
-              <textarea name="description" id="description" value={user.description} onChange={handleChange} placeholder="Description" className="form-textarea h-24" />
-            </div>
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-bold mb-2">First Name</label>
-              <input type="text" name="firstName" id="firstName" value={user.firstName} onChange={handleChange} placeholder="First Name" className="form-input" />
-            </div>
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-bold mb-2">Last Name</label>
-              <input type="text" name="lastName" id="lastName" value={user.lastName} onChange={handleChange} placeholder="Last Name" className="form-input" />
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-bold mb-2">Email</label>
-              <input type="email" name="email" id="email" value={user.email} onChange={handleChange} placeholder="Email" className="form-input" />
-              {errors.email && <p className="text-red-500 text-xs italic">{errors.email}</p>}
-            </div>
-            <div>
-              <label htmlFor="phone" className="block text-sm font-bold mb-2">Phone Number</label>
-              <input type="tel" name="phone" id="phone" value={user.phone} onChange={handleChange} placeholder="Phone Number" className="form-input" />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-bold mb-2">Create Password</label>
-              <input type="password" name="password" id="password" value={user.password} onChange={handleChange} placeholder="Create Password" className="form-input" />
-              {errors.password && <p className="text-red-500 text-xs italic">{errors.password}</p>}
-            </div>
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-bold mb-2">Confirm Password</label>
-              <input type="password" name="confirmPassword" id="confirmPassword" value={user.confirmPassword} onChange={handleChange} placeholder="Confirm Password" className="form-input" />
-            </div>
+          <div className="grid gap-5 md:grid-cols-2">
+            {[
+              ["hostName", "Host Name"],
+              ["firstName", "First Name"],
+              ["lastName", "Last Name"],
+              ["email", "Email"],
+              ["phone", "Phone"],
+              ["password", "Password"],
+              ["confirmPassword", "Confirm Password"],
+            ].map(([name, label]) => (
+              <label key={name} className="block text-sm font-medium text-zinc-200" htmlFor={name}>
+                {label}
+                <input
+                  id={name}
+                  name={name}
+                  type={name.toLowerCase().includes("password") ? "password" : name === "email" ? "email" : "text"}
+                  value={user[name as keyof RegistrationInput] || ""}
+                  onChange={handleChange}
+                  className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300"
+                />
+                {errors[name] && <span className="mt-1 block text-xs text-red-200">{errors[name]}</span>}
+              </label>
+            ))}
+
+            <label className="block text-sm font-medium text-zinc-200 md:col-span-2" htmlFor="description">
+              Host Description
+              <textarea
+                id="description"
+                name="description"
+                value={user.description}
+                onChange={handleChange}
+                rows={4}
+                className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300"
+              />
+            </label>
           </div>
 
-          <button type="submit" className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-            Register
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="mt-6 rounded-md bg-amber-300 px-5 py-3 font-semibold text-zinc-950 hover:bg-amber-200 disabled:cursor-wait disabled:opacity-70"
+          >
+            {isSubmitting ? "Registering" : "Register Host"}
           </button>
         </form>
-      </div>
-    </>
+      </section>
+    </main>
   );
 };
 

@@ -10,7 +10,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <UserProvider>
-        <div className="body-bg min-h-screen">
+        <div className="min-h-screen bg-zinc-950">
           <EdgeStoreProvider>
             <Component {...pageProps} />
           </EdgeStoreProvider>

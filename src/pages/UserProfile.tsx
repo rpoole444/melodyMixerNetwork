@@ -1,85 +1,137 @@
-import Header from '@/components/Header';
-import { useState } from 'react';
+import Image from "next/image";
+import Link from "next/link";
+import Header from "@/components/Header";
+import { useUser } from "@/contexts/UserContext";
+import { ApiUser, api } from "@/lib/api";
+import { FormEvent, useEffect, useState } from "react";
+
+const savedShows = [
+  { id: 1, title: "Jazz Nights", tracks: 12, status: "Ready" },
+  { id: 2, title: "Classic Rock Hour", tracks: 9, status: "Draft" },
+  { id: 3, title: "Hip Hop Beats", tracks: 15, status: "Scheduled" },
+];
 
 const UserProfile = () => {
+  const { user, updateUser, error } = useUser();
   const [isEditing, setIsEditing] = useState(false);
-  const [user, setUser] = useState({
-    hostName: 'Poole and the Gang',
-    description: 'Enthusiastic music lover and host',
-    firstName: 'Reid',
-    lastName: 'Poole',
-    email: 'reid@example.com',
-    phone: '123-456-7890',
-    profilePic: '/hostpic.jpg'  // Ensure the path is correct
-  });
-  const [shows, setShows] = useState([
-    { id: 1, title: "Jazz Nights" },
-    { id: 2, title: "Classic Rock Hour" },
-    { id: 3, title: "Hip Hop Beats" }
-    // Add more shows here
-  ]);
+  const [draft, setDraft] = useState<ApiUser>(user || api.demoUser);
 
-  const handleEditToggle = () => {
-    setIsEditing(!isEditing);
-  };
+  useEffect(() => {
+    setDraft(user || api.demoUser);
+  }, [user]);
 
-  const handleChange = (e:any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setUser({ ...user, [name]: value });
+    setDraft((current) => ({ ...current, [name]: value }));
   };
 
-  const handleSubmit = (e:any) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('Submitting:', user);
+    await updateUser(draft);
     setIsEditing(false);
-    // Normally you would also send this data back to your server
   };
 
   return (
-    <>
-    <Header title="Melody Maker Profile" />
-      <div className="flex flex-col text-black items-center justify-center min-h-screen bg-cover bg-center" style={{ backgroundImage: "url('/path_to_your_background_image.jpg')" }}>
-       <div className="flex flex-col md:flex-row items-start bg-toupe bg-opacity-90 mb-40 backdrop-filter items-center justify-center backdrop-blur-lg rounded-lg shadow-lg p-8 w-full max-w-6xl">
-        <h1 className="text-center text-white text-4xl">Welcome to your Host Profile, {user.hostName}!!!</h1>
-       </div>
-      {!isEditing ? (
-        <div className="flex flex-col md:flex-row items-start bg-white bg-opacity-90 backdrop-filter backdrop-blur-lg rounded-lg shadow-lg p-8 w-full max-w-6xl">
-          <img src={user.profilePic} alt="Profile" className="w-64 h-64 rounded-full object-cover mr-8" />
-          <div className="flex-1">
-            <h2 className="text-3xl font-bold">{user.hostName}</h2>
-            <p className="text-xl">{user.description}</p>
-            <div className="text-lg mt-4">
-              <p>{`${user.firstName} ${user.lastName}`}</p>
-              <p>{user.email}</p>
-              <p>{user.phone}</p>
-            </div>
-            <button onClick={handleEditToggle} className="mt-4 py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-700">Edit Profile</button>
+    <main className="min-h-screen bg-zinc-950 text-white">
+      <Header title="Host Profile" />
+      <section className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
+        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-amber-300">Host Profile</p>
+            <h1 className="mt-3 text-4xl font-semibold">{draft.hostName}</h1>
+            <p className="mt-3 max-w-2xl text-zinc-300">{draft.description}</p>
           </div>
-          <div className="w-full md:w-1/3 mt-4 md:mt-0">
-            <h3 className="text-xl font-bold mb-2">Your Shows:</h3>
-            <ul className="list-disc pl-5">
-              {shows.map(show => (
-                <li key={show.id} className="bg-gray-300 rounded-lg p-2 my-1">{show.title}</li>
-              ))}
-            </ul>
-          </div>
+          <Link href="/CreateShow" className="w-fit rounded-md bg-amber-300 px-4 py-3 font-semibold text-zinc-950 hover:bg-amber-200">
+            Create New Show
+          </Link>
         </div>
-      ) : (
-          <form onSubmit={handleSubmit} className="w-full max-w-4xl bg-white bg-opacity-80 backdrop-filter backdrop-blur-lg rounded-lg p-8 shadow-lg">
-            <div className="grid grid-cols-2 gap-4">
-              <input type="text" name="hostName" value={user.hostName} onChange={handleChange} className="input col-span-2" placeholder="Host Name" />
-              <textarea name="description" value={user.description} onChange={handleChange} className="textarea col-span-2" placeholder="Description"></textarea>
-              <input type="text" name="firstName" value={user.firstName} onChange={handleChange} className="input" placeholder="First Name" />
-              <input type="text" name="lastName" value={user.lastName} onChange={handleChange} className="input" placeholder="Last Name" />
-              <input type="email" name="email" value={user.email} onChange={handleChange} className="input" placeholder="Email" />
-              <input type="tel" name="phone" value={user.phone} onChange={handleChange} className="input" placeholder="Phone Number" />
-              <button type="submit" className="col-span-2 py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-700">Save</button>
+
+        {error && <p className="mb-6 rounded-md border border-amber-300/40 bg-amber-950/40 p-3 text-amber-100">{error}</p>}
+
+        <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+          <section className="rounded-md border border-white/10 bg-zinc-900 p-6">
+            <div className="flex flex-col gap-5 sm:flex-row lg:flex-col">
+              <Image
+                src={draft.profileImage || "/hostpic.jpg"}
+                alt={`${draft.hostName} profile`}
+                width={220}
+                height={220}
+                className="aspect-square rounded-md object-cover"
+              />
+              <div>
+                <h2 className="text-2xl font-semibold">{draft.firstName} {draft.lastName}</h2>
+                <p className="mt-2 text-zinc-300">{draft.email}</p>
+                <p className="text-zinc-300">{draft.phone || "No phone number"}</p>
+                <button
+                  onClick={() => setIsEditing((editing) => !editing)}
+                  className="mt-5 rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-amber-300"
+                  type="button"
+                >
+                  {isEditing ? "Cancel" : "Edit Profile"}
+                </button>
+              </div>
             </div>
-            <button onClick={handleEditToggle} className="mt-4 py-2 px-4 bg-gray-500 text-white rounded hover:bg-gray-700">Cancel</button>
-          </form>
-        )}
-      </div>
-    </>
+          </section>
+
+          <section className="rounded-md border border-white/10 bg-zinc-900 p-6">
+            {isEditing ? (
+              <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
+                {[
+                  ["hostName", "Host Name"],
+                  ["firstName", "First Name"],
+                  ["lastName", "Last Name"],
+                  ["email", "Email"],
+                  ["phone", "Phone"],
+                ].map(([name, label]) => (
+                  <label key={name} className="block text-sm font-medium text-zinc-200" htmlFor={name}>
+                    {label}
+                    <input
+                      id={name}
+                      name={name}
+                      value={draft[name as keyof ApiUser] || ""}
+                      onChange={handleChange}
+                      className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300"
+                    />
+                  </label>
+                ))}
+                <label className="block text-sm font-medium text-zinc-200 md:col-span-2" htmlFor="description">
+                  Description
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={draft.description}
+                    onChange={handleChange}
+                    rows={5}
+                    className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300"
+                  />
+                </label>
+                <button className="rounded-md bg-amber-300 px-4 py-3 font-semibold text-zinc-950 hover:bg-amber-200 md:col-span-2" type="submit">
+                  Save Profile
+                </button>
+              </form>
+            ) : (
+              <>
+                <div className="mb-5 flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">Show Library</h2>
+                  <span className="text-sm text-zinc-400">{savedShows.length} shows</span>
+                </div>
+                <div className="divide-y divide-white/10">
+                  {savedShows.map((show) => (
+                    <div key={show.id} className="grid grid-cols-[1fr_auto] gap-4 py-4">
+                      <div>
+                        <h3 className="font-semibold">{show.title}</h3>
+                        <p className="text-sm text-zinc-400">{show.tracks} tracks prepared</p>
+                      </div>
+                      <span className="h-fit rounded-full border border-amber-300/40 px-3 py-1 text-xs text-amber-100">{show.status}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </section>
+        </div>
+      </section>
+    </main>
   );
 };
 

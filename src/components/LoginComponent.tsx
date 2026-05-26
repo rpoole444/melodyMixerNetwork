@@ -1,75 +1,80 @@
-import { useState, FormEvent, useEffect } from 'react';
-import { useUser } from '@/contexts/UserContext';
+import Link from "next/link";
+import { FormEvent, useState } from "react";
+import { useUser } from "@/contexts/UserContext";
 
-interface LoginComponentProps {
-  onLoginSuccess: () => void;
-}
+const LoginComponent = () => {
+  const [email, setEmail] = useState("demo@melody.test");
+  const [password, setPassword] = useState("demo123");
+  const { login, loginDemo, status, error } = useUser();
 
-const LoginComponent: React.FC<LoginComponentProps> = ({ onLoginSuccess }) => {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const { login, user } = useUser();
-
-  const handleLogin = (e: FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    login(email, password);
+    await login(email, password);
   };
 
-  useEffect(() => {
-    if (user) {
-      onLoginSuccess();
-    }
-  }, [user, onLoginSuccess]);
-
   return (
-    <div className="bg-white shadow-md rounded px-8 pt-3 mt-10 pb-8 mb-4 flex flex-col h-1/2 w-1/3 justify-center items-center">
-      <form onSubmit={handleLogin}>
-        <h2 className="inline-block align-baseline font-bold text-xl text-black mb-5 p-5">Please Sign In To Start Your Journey</h2>
-        <div className="mb-4">
-          <label className="block text-black text-sm font-bold mb-2" htmlFor="username">
-            Email
-          </label>
+    <section className="w-full max-w-md rounded-md border border-white/10 bg-zinc-950/90 p-6 shadow-2xl">
+      <div className="mb-6">
+        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-amber-300">Host Access</p>
+        <h2 className="mt-2 text-2xl font-semibold text-white">Sign in to the station desk</h2>
+      </div>
+
+      <form onSubmit={handleLogin} className="space-y-4">
+        <label className="block text-sm font-medium text-zinc-200" htmlFor="email">
+          Email
           <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-black"
-            id="username"
+            className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-3 text-white outline-none focus:border-amber-300"
+            id="email"
             type="email"
-            placeholder="Email"
+            placeholder="host@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
           />
-        </div>
-        <div className="mb-6">
-          <label className="block text-black text-sm font-bold mb-2" htmlFor="password">
-            Password
-          </label>
+        </label>
+
+        <label className="block text-sm font-medium text-zinc-200" htmlFor="password">
+          Password
           <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-black mb-3"
+            className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-3 text-white outline-none focus:border-amber-300"
             id="password"
             type="password"
-            placeholder="******************"
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
-        </div>
-        <div className="flex items-center justify-between">
+        </label>
+
+        {error && <p className="rounded-md border border-red-400/40 bg-red-950/40 p-3 text-sm text-red-100">{error}</p>}
+
+        <div className="grid gap-3 sm:grid-cols-2">
           <button
-            className="bg-blue-500 hover:bg-blue-dark text-white font-bold py-2 px-4 rounded"
+            className="rounded-md bg-amber-300 px-4 py-3 font-semibold text-zinc-950 hover:bg-amber-200 disabled:cursor-wait disabled:opacity-70"
             type="submit"
+            disabled={status === "loading"}
           >
-            Sign In
+            {status === "loading" ? "Signing In" : "Sign In"}
+          </button>
+          <button
+            className="rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-amber-300"
+            type="button"
+            onClick={loginDemo}
+          >
+            Demo Mode
           </button>
         </div>
-        <a
-          className="inline-block align-baseline font-bold text-sm text-black hover:text-blue-darker"
-          href="/forgot-password"
-        >
-          Forgot Password?
-        </a>
-        <p className="mt-4 text-black">
-          Need an account? <a href="/Registration" className="text-blue-500 hover:text-blue-700">Register</a>
-        </p>
       </form>
-    </div>
+
+      <div className="mt-5 flex items-center justify-between text-sm">
+        <Link href="/Registration" className="font-semibold text-amber-200 hover:text-amber-100">
+          Register a host
+        </Link>
+        <Link href="/forgot-password" className="text-zinc-300 hover:text-white">
+          Forgot password?
+        </Link>
+      </div>
+    </section>
   );
 };
 
