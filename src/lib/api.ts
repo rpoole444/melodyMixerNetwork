@@ -63,10 +63,22 @@ export type AudioFileInput = {
   artist: string;
   album?: string;
   genre?: string;
+  duration?: number;
   notes?: string;
   kind: "track" | "host_break" | "full_show";
   visibility: "private" | "shared" | "pending_review";
   file: File;
+};
+
+export type AudioFileMetadataInput = {
+  title?: string;
+  artist?: string;
+  album?: string;
+  genre?: string;
+  duration?: number;
+  notes?: string;
+  visibility?: "private" | "shared" | "pending_review";
+  explicit?: boolean;
 };
 
 export type AudioFileRecord = {
@@ -77,6 +89,7 @@ export type AudioFileRecord = {
   artist: string;
   album?: string;
   genre?: string;
+  duration?: number;
   size: number;
   s3_key: string;
   url: string;
@@ -126,6 +139,7 @@ export type PlaylistRecord = {
       url?: string;
       kind?: "track" | "host_break" | "full_show";
       visibility?: "private" | "shared" | "pending_review";
+      duration?: number;
     } | null;
   }>;
   created_at?: string;
@@ -137,6 +151,19 @@ export type StreamManifest = {
   station?: string;
   target?: string;
   generated_at?: string;
+  provider?: {
+    name?: string;
+    mode?: string;
+    base_url?: string | null;
+    station_id?: string | null;
+    station_shortcode?: string | null;
+    stream_url?: string | null;
+    api_key_configured?: boolean;
+    recommended_playlist?: string;
+    recommended_media_folder?: string;
+    next_steps?: string[];
+    api_notes?: string;
+  };
   show?: {
     id?: number;
     title?: string;
@@ -338,6 +365,7 @@ export const api = {
     formData.append("audio_file[artist]", input.artist);
     formData.append("audio_file[album]", input.album || "");
     formData.append("audio_file[genre]", input.genre || "");
+    if (typeof input.duration === "number") formData.append("audio_file[duration]", String(input.duration));
     formData.append("audio_file[notes]", input.notes || "");
     formData.append("audio_file[kind]", input.kind);
     formData.append("audio_file[visibility]", input.visibility);
@@ -346,6 +374,17 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/audio_files`, {
       method: "POST",
       body: formData,
+      credentials: "include",
+    });
+
+    return handleResponse(response);
+  },
+
+  async updateAudioFileMetadata(id: number, input: AudioFileMetadataInput): Promise<AudioFileRecord> {
+    const response = await fetch(`${API_BASE_URL}/audio_files/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ audio_file: input }),
       credentials: "include",
     });
 
@@ -413,6 +452,17 @@ export const api = {
 
   async requestShowChanges(id: number, reviewNotes: string): Promise<PlaylistRecord> {
     const response = await fetch(`${API_BASE_URL}/playlists/${id}/request_changes`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ review: { review_notes: reviewNotes } }),
+      credentials: "include",
+    });
+
+    return handleResponse(response);
+  },
+
+  async reopenShowForEdits(id: number, reviewNotes: string): Promise<PlaylistRecord> {
+    const response = await fetch(`${API_BASE_URL}/playlists/${id}/reopen_for_edits`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ review: { review_notes: reviewNotes } }),
