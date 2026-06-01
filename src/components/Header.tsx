@@ -8,10 +8,14 @@ type HeaderProps = {
 };
 
 const menuItems = [
-  { name: "Dashboard", link: "/" },
-  { name: "Host Profile", link: "/UserProfile" },
-  { name: "Create Show", link: "/CreateShow" },
-  { name: "Register Host", link: "/Registration" },
+  { name: "Dashboard", link: "/", adminOnly: false },
+  { name: "Listen", link: "/AlpineGrooveGuide", adminOnly: false },
+  { name: "Host Profile", link: "/UserProfile", adminOnly: false },
+  { name: "Create Show", link: "/CreateShow", adminOnly: false },
+  { name: "Station Review", link: "/StationReview", adminOnly: true },
+  { name: "Programming Clock", link: "/ProgrammingClock", adminOnly: true },
+  { name: "Host Invites", link: "/HostInvites", adminOnly: true },
+  { name: "Register Host", link: "/Registration", adminOnly: false },
 ];
 
 const Header = ({ title = "Melody Mixer Network" }: HeaderProps) => {
@@ -54,7 +58,9 @@ const Header = ({ title = "Melody Mixer Network" }: HeaderProps) => {
           </button>
           {isMenuOpen && (
             <nav className="absolute right-0 top-12 w-56 overflow-hidden rounded-md border border-white/10 bg-zinc-900 shadow-2xl">
-              {menuItems.map((item) => (
+              {menuItems
+                .filter((item) => !item.adminOnly || user?.role === "admin")
+                .map((item) => (
                 <Link
                   key={item.link}
                   href={item.link}

@@ -12,6 +12,7 @@ const emptyUser: RegistrationInput = {
   phone: "",
   password: "",
   confirmPassword: "",
+  inviteCode: "",
 };
 
 const RegistrationPage = () => {
@@ -33,6 +34,7 @@ const RegistrationPage = () => {
     if (!user.firstName.trim()) nextErrors.firstName = "First name is required.";
     if (!user.lastName.trim()) nextErrors.lastName = "Last name is required.";
     if (!user.email.includes("@")) nextErrors.email = "Enter a valid email.";
+    if (!user.inviteCode.trim()) nextErrors.inviteCode = "Invite code is required.";
     if (user.password.length < 6) nextErrors.password = "Password must be at least 6 characters.";
     if (user.password !== user.confirmPassword) nextErrors.confirmPassword = "Passwords do not match.";
 
@@ -64,9 +66,9 @@ const RegistrationPage = () => {
       <section className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
         <div className="mb-8">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-amber-300">New Host</p>
-          <h1 className="mt-3 text-4xl font-semibold">Create the host profile the backend expects.</h1>
+          <h1 className="mt-3 text-4xl font-semibold">Create your host profile.</h1>
           <p className="mt-3 max-w-2xl text-zinc-300">
-            This submits Rails-shaped `user` data to `/api/v1/users` and validates the required fields before the request leaves the browser.
+            Registration is invite-only while Alpine Groove Guide is in private alpha. Use the code you received from a station admin.
           </p>
         </div>
 
@@ -81,6 +83,7 @@ const RegistrationPage = () => {
               ["lastName", "Last Name"],
               ["email", "Email"],
               ["phone", "Phone"],
+              ["inviteCode", "Invite Code"],
               ["password", "Password"],
               ["confirmPassword", "Confirm Password"],
             ].map(([name, label]) => (

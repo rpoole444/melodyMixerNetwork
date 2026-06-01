@@ -6,16 +6,38 @@ export type ApiUser = {
   lastName: string;
   email: string;
   phone: string;
+  role: "host" | "admin";
   profileImage?: string;
 };
 
-export type RegistrationInput = ApiUser & {
+export type RegistrationInput = Omit<ApiUser, "role"> & {
   password: string;
   confirmPassword: string;
+  inviteCode: string;
+};
+
+export type HostInvitationInput = {
+  email?: string;
+  notes?: string;
+  expiresAt?: string;
+};
+
+export type HostInvitationRecord = {
+  id: number;
+  code: string;
+  email?: string;
+  notes?: string;
+  status: "active" | "used" | "expired";
+  expires_at?: string;
+  used_at?: string;
+  invited_by?: string;
+  used_by?: string;
+  created_at?: string;
 };
 
 export type TrackInput = {
   id: string;
+  audioFileId?: number;
   title: string;
   artist: string;
   album?: string;
@@ -30,36 +52,136 @@ export type ShowInput = {
   title: string;
   description: string;
   hostName: string;
-  status: "draft" | "scheduled" | "ready";
+  status: "draft" | "scheduled" | "ready" | "submitted";
   scheduledAt?: string;
+  fullShowFile?: File | null;
   tracks: TrackInput[];
 };
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api/v1";
-
-const demoUser: ApiUser = {
-  id: 1,
-  hostName: "Poole and the Gang",
-  description: "Independent radio host building curated sets for Denver listeners.",
-  firstName: "Reid",
-  lastName: "Poole",
-  email: "reid@example.com",
-  phone: "123-456-7890",
-  profileImage: "/hostpic.jpg",
+export type AudioFileInput = {
+  title: string;
+  artist: string;
+  album?: string;
+  genre?: string;
+  notes?: string;
+  kind: "track" | "host_break" | "full_show";
+  visibility: "private" | "shared" | "pending_review";
+  file: File;
 };
+
+export type AudioFileRecord = {
+  id: number;
+  user_id?: number;
+  name: string;
+  title: string;
+  artist: string;
+  album?: string;
+  genre?: string;
+  size: number;
+  s3_key: string;
+  url: string;
+  content_type?: string;
+  kind: "track" | "host_break" | "full_show";
+  visibility: "private" | "shared" | "pending_review";
+  explicit?: boolean;
+  notes?: string;
+  created_at?: string;
+};
+
+export type PlaylistRecord = {
+  id: number;
+  user_id: number;
+  name: string;
+  description: string;
+  host_name: string;
+  status: "draft" | "submitted" | "needs_edits" | "rejected" | "ready" | "scheduled" | "aired";
+  scheduled_at?: string;
+  review_notes?: string;
+  reviewed_at?: string;
+  delivery_status: "not_sent" | "queued" | "sent" | "failed";
+  delivery_target?: string;
+  delivery_reference?: string;
+  delivery_manifest?: StreamManifest;
+  delivered_at?: string;
+  full_show_audio_file?: {
+    id: number;
+    name: string;
+    url: string;
+  } | null;
+  songs: Array<{
+    id: number;
+    name: string;
+    artist: string;
+    album: string;
+    duration: number;
+    position: number;
+    file_url?: string;
+    file_name?: string;
+    audio_file_id?: number;
+    audio_file?: {
+      id: number;
+      name: string;
+      title?: string;
+      artist?: string;
+      url?: string;
+      kind?: "track" | "host_break" | "full_show";
+      visibility?: "private" | "shared" | "pending_review";
+    } | null;
+  }>;
+  created_at?: string;
+};
+
+export type StreamManifest = {
+  version?: number;
+  reference?: string;
+  station?: string;
+  target?: string;
+  generated_at?: string;
+  show?: {
+    id?: number;
+    title?: string;
+    description?: string;
+    host_name?: string;
+    scheduled_at?: string;
+    status?: string;
+    total_duration_seconds?: number;
+  };
+  assets?: Array<{
+    position?: number;
+    role?: string;
+    audio_file_id?: number;
+    title?: string;
+    artist?: string;
+    file_name?: string;
+    content_type?: string;
+    url?: string;
+    s3_key?: string;
+  }>;
+  playout?: Array<{
+    position?: number;
+    type?: string;
+    title?: string;
+    artist?: string;
+    duration_seconds?: number;
+    audio_url?: string;
+  }>;
+};
+
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api/v1";
 
 const normalizeUser = (payload: any): ApiUser => {
   const attributes = payload?.data?.attributes ?? payload?.attributes ?? payload;
 
   return {
-    id: Number(payload?.data?.id ?? payload?.id ?? attributes?.id ?? demoUser.id),
-    hostName: attributes?.host_name ?? attributes?.hostName ?? demoUser.hostName,
-    description: attributes?.description ?? demoUser.description,
-    firstName: attributes?.first_name ?? attributes?.firstName ?? demoUser.firstName,
-    lastName: attributes?.last_name ?? attributes?.lastName ?? demoUser.lastName,
-    email: attributes?.email ?? demoUser.email,
-    phone: attributes?.phone_number ?? attributes?.phone ?? demoUser.phone,
-    profileImage: attributes?.profile_image ?? attributes?.profileImage ?? demoUser.profileImage,
+    id: Number(payload?.data?.id ?? payload?.id ?? attributes?.id),
+    hostName: attributes?.host_name ?? attributes?.hostName ?? "",
+    description: attributes?.description ?? "",
+    firstName: attributes?.first_name ?? attributes?.firstName ?? "",
+    lastName: attributes?.last_name ?? attributes?.lastName ?? "",
+    email: attributes?.email ?? "",
+    phone: attributes?.phone_number ?? attributes?.phone ?? "",
+    role: attributes?.role === "admin" ? "admin" : "host",
+    profileImage: attributes?.profile_image ?? attributes?.profileImage ?? "/hostpic.jpg",
   };
 };
 
@@ -74,20 +196,51 @@ const handleResponse = async (response: Response) => {
   return body;
 };
 
-export const api = {
-  demoUser,
+const buildShowFormData = (show: ShowInput) => {
+  const formData = new FormData();
+  formData.append("playlist[name]", show.title);
+  formData.append("playlist[description]", show.description);
+  formData.append("playlist[host_name]", show.hostName);
+  formData.append("playlist[status]", show.status);
+  formData.append("playlist[scheduled_at]", show.scheduledAt || "");
 
-  async login(email: string, password: string): Promise<ApiUser> {
-    if (email === "demo@melody.test" && password === "demo123") {
-      return demoUser;
+  if (show.fullShowFile) {
+    formData.append("playlist[full_show_file]", show.fullShowFile);
+  }
+
+  show.tracks.forEach((track, index) => {
+    formData.append(`playlist[songs][${index}][name]`, track.title);
+    formData.append(`playlist[songs][${index}][artist]`, track.artist);
+    formData.append(`playlist[songs][${index}][album]`, track.album || track.details || "Single");
+    formData.append(`playlist[songs][${index}][duration]`, track.length || "0");
+    formData.append(`playlist[songs][${index}][file_url]`, track.fileUrl || "");
+    formData.append(`playlist[songs][${index}][file_name]`, track.fileName || "");
+    if (track.audioFileId) {
+      formData.append(`playlist[songs][${index}][audio_file_id]`, String(track.audioFileId));
     }
+  });
 
+  return formData;
+};
+
+export const api = {
+  async login(email: string, password: string): Promise<ApiUser> {
     const response = await fetch(`${API_BASE_URL}/sessions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ session: { email, password } }),
       credentials: "include",
     });
+
+    return normalizeUser(await handleResponse(response));
+  },
+
+  async currentUser(): Promise<ApiUser | null> {
+    const response = await fetch(`${API_BASE_URL}/sessions/current`, {
+      credentials: "include",
+    });
+
+    if (response.status === 401) return null;
 
     return normalizeUser(await handleResponse(response));
   },
@@ -113,12 +266,38 @@ export const api = {
           phone_number: user.phone,
           password: user.password,
           password_confirmation: user.confirmPassword,
+          invite_code: user.inviteCode,
         },
       }),
       credentials: "include",
     });
 
     return normalizeUser(await handleResponse(response));
+  },
+
+  async listHostInvitations(): Promise<HostInvitationRecord[]> {
+    const response = await fetch(`${API_BASE_URL}/host_invitations`, {
+      credentials: "include",
+    });
+
+    return handleResponse(response);
+  },
+
+  async createHostInvitation(input: HostInvitationInput): Promise<HostInvitationRecord> {
+    const response = await fetch(`${API_BASE_URL}/host_invitations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        host_invitation: {
+          email: input.email,
+          notes: input.notes,
+          expires_at: input.expiresAt,
+        },
+      }),
+      credentials: "include",
+    });
+
+    return handleResponse(response);
   },
 
   async updateUser(user: ApiUser): Promise<ApiUser> {
@@ -143,29 +322,133 @@ export const api = {
     return normalizeUser(await handleResponse(response));
   },
 
-  async createShow(show: ShowInput) {
-    const payload = {
-      playlist: {
-        name: show.title,
-        description: show.description,
-        host_name: show.hostName,
-        status: show.status,
-        scheduled_at: show.scheduledAt,
-        songs: show.tracks.map((track) => ({
-          name: track.title,
-          artist: track.artist,
-          album: track.album || track.details || "Single",
-          duration: track.length,
-          file_url: track.fileUrl,
-          file_name: track.fileName,
-        })),
-      },
-    };
+  async listAudioFiles(scope?: "mine"): Promise<AudioFileRecord[]> {
+    const query = scope ? `?scope=${scope}` : "";
+    const response = await fetch(`${API_BASE_URL}/audio_files${query}`, {
+      credentials: "include",
+    });
 
+    return handleResponse(response);
+  },
+
+  async uploadAudioFile(input: AudioFileInput): Promise<AudioFileRecord> {
+    const formData = new FormData();
+    formData.append("audio_file[title]", input.title);
+    formData.append("audio_file[name]", input.file.name);
+    formData.append("audio_file[artist]", input.artist);
+    formData.append("audio_file[album]", input.album || "");
+    formData.append("audio_file[genre]", input.genre || "");
+    formData.append("audio_file[notes]", input.notes || "");
+    formData.append("audio_file[kind]", input.kind);
+    formData.append("audio_file[visibility]", input.visibility);
+    formData.append("audio_file[file]", input.file);
+
+    const response = await fetch(`${API_BASE_URL}/audio_files`, {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+    });
+
+    return handleResponse(response);
+  },
+
+  async createShow(show: ShowInput) {
     const response = await fetch(`${API_BASE_URL}/playlists`, {
       method: "POST",
+      body: buildShowFormData(show),
+      credentials: "include",
+    });
+
+    return handleResponse(response);
+  },
+
+  async getShow(id: number): Promise<PlaylistRecord> {
+    const response = await fetch(`${API_BASE_URL}/playlists/${id}`, {
+      credentials: "include",
+    });
+
+    return handleResponse(response);
+  },
+
+  async updateShow(id: number, show: ShowInput): Promise<PlaylistRecord> {
+    const response = await fetch(`${API_BASE_URL}/playlists/${id}`, {
+      method: "PATCH",
+      body: buildShowFormData(show),
+      credentials: "include",
+    });
+
+    return handleResponse(response);
+  },
+
+  async listStationShows(): Promise<PlaylistRecord[]> {
+    const response = await fetch(`${API_BASE_URL}/playlists?scope=station`, {
+      credentials: "include",
+    });
+
+    return handleResponse(response);
+  },
+
+  async listPublicSchedule(): Promise<PlaylistRecord[]> {
+    const response = await fetch(`${API_BASE_URL}/station/schedule`);
+
+    return handleResponse(response);
+  },
+
+  async listMyShows(): Promise<PlaylistRecord[]> {
+    const response = await fetch(`${API_BASE_URL}/playlists`, {
+      credentials: "include",
+    });
+
+    return handleResponse(response);
+  },
+
+  async markShowReady(id: number): Promise<PlaylistRecord> {
+    const response = await fetch(`${API_BASE_URL}/playlists/${id}/mark_ready`, {
+      method: "PATCH",
+      credentials: "include",
+    });
+
+    return handleResponse(response);
+  },
+
+  async requestShowChanges(id: number, reviewNotes: string): Promise<PlaylistRecord> {
+    const response = await fetch(`${API_BASE_URL}/playlists/${id}/request_changes`, {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ review: { review_notes: reviewNotes } }),
+      credentials: "include",
+    });
+
+    return handleResponse(response);
+  },
+
+  async rejectShow(id: number, reviewNotes: string): Promise<PlaylistRecord> {
+    const response = await fetch(`${API_BASE_URL}/playlists/${id}/reject`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ review: { review_notes: reviewNotes } }),
+      credentials: "include",
+    });
+
+    return handleResponse(response);
+  },
+
+  async scheduleShow(id: number, scheduledAt: string): Promise<PlaylistRecord> {
+    const response = await fetch(`${API_BASE_URL}/playlists/${id}/schedule`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playlist: { scheduled_at: scheduledAt } }),
+      credentials: "include",
+    });
+
+    return handleResponse(response);
+  },
+
+  async deliverShow(id: number, target: string): Promise<PlaylistRecord> {
+    const response = await fetch(`${API_BASE_URL}/playlists/${id}/deliver`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ delivery: { target } }),
       credentials: "include",
     });
 

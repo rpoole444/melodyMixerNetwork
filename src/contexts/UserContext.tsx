@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState, ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 import { api, ApiUser } from "@/lib/api";
 
 type AuthStatus = "idle" | "loading" | "authenticated" | "error";
@@ -8,7 +8,6 @@ interface UserContextProps {
   status: AuthStatus;
   error: string;
   login: (email: string, password: string) => Promise<void>;
-  loginDemo: () => void;
   logout: () => Promise<void>;
   updateUser: (user: ApiUser) => Promise<void>;
 }
@@ -19,6 +18,33 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<ApiUser | null>(null);
   const [status, setStatus] = useState<AuthStatus>("idle");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCurrentUser = async () => {
+      setStatus("loading");
+
+      try {
+        const currentUser = await api.currentUser();
+        if (!isMounted) return;
+
+        setUser(currentUser);
+        setStatus(currentUser ? "authenticated" : "idle");
+      } catch {
+        if (!isMounted) return;
+
+        setUser(null);
+        setStatus("idle");
+      }
+    };
+
+    loadCurrentUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const login = async (email: string, password: string) => {
     setStatus("loading");
@@ -32,12 +58,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setStatus("error");
       setError(err instanceof Error ? err.message : "Login failed.");
     }
-  };
-
-  const loginDemo = () => {
-    setUser(api.demoUser);
-    setStatus("authenticated");
-    setError("");
   };
 
   const logout = async () => {
@@ -62,7 +82,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const value = useMemo(
-    () => ({ user, status, error, login, loginDemo, logout, updateUser }),
+    () => ({ user, status, error, login, logout, updateUser }),
     [user, status, error],
   );
 

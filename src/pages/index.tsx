@@ -2,21 +2,56 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import LoginComponent from "@/components/LoginComponent";
 import { useUser } from "@/contexts/UserContext";
+import { api, PlaylistRecord } from "@/lib/api";
+import { useEffect, useMemo, useState } from "react";
 
-const statCards = [
-  { label: "Draft Shows", value: "3", detail: "2 need track review" },
-  { label: "Ready Blocks", value: "7", detail: "14.5 hours programmed" },
-  { label: "Host Assets", value: "28", detail: "music, voice, bumpers" },
-];
-
-const upcoming = [
-  { time: "08:00", show: "Morning Blend", status: "Ready" },
-  { time: "11:30", show: "Local Artist Lunch", status: "Needs Intro" },
-  { time: "18:00", show: "Denver After Dark", status: "Draft" },
-];
+const formatDuration = (seconds: number) => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.round((seconds % 3600) / 60);
+  if (hours === 0) return `${minutes}m`;
+  return `${hours}h ${minutes}m`;
+};
 
 export default function Home() {
   const { user } = useUser();
+  const [shows, setShows] = useState<PlaylistRecord[]>([]);
+  const [dashboardMessage, setDashboardMessage] = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+
+    const loadDashboard = async () => {
+      setDashboardMessage("Loading station data...");
+
+      try {
+        const nextShows = user.role === "admin" ? await api.listStationShows() : await api.listMyShows();
+        setShows(nextShows);
+        setDashboardMessage("");
+      } catch (error) {
+        setDashboardMessage(error instanceof Error ? error.message : "Could not load station data.");
+      }
+    };
+
+    loadDashboard();
+  }, [user]);
+
+  const scheduledShows = useMemo(
+    () =>
+      shows
+        .filter((show) => show.scheduled_at)
+        .sort((a, b) => new Date(a.scheduled_at || "").getTime() - new Date(b.scheduled_at || "").getTime()),
+    [shows],
+  );
+
+  const statCards = useMemo(() => {
+    const totalDuration = shows.reduce((sum, show) => sum + show.songs.reduce((songSum, song) => songSum + (song.duration || 0), 0), 0);
+
+    return [
+      { label: "Draft Shows", value: String(shows.filter((show) => show.status === "draft").length), detail: "Saved by this host" },
+      { label: "Station Queue", value: String(shows.filter((show) => ["submitted", "ready", "scheduled"].includes(show.status)).length), detail: "Submitted, ready, or scheduled" },
+      { label: "Programmed Audio", value: formatDuration(totalDuration), detail: "Lineup duration in Rails" },
+    ];
+  }, [shows]);
 
   if (!user) {
     return (
@@ -29,7 +64,7 @@ export default function Home() {
                 Build, schedule, and manage radio shows from one host desk.
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-zinc-200">
-                The frontend is ready to work as a polished station console today, with the Rails API contract separated so the backend can take over auth, profiles, audio, and playlist persistence.
+                Sign in with a Rails account to upload audio, build shows, submit them for review, and prepare stream packages for Alpine Groove Guide.
               </p>
             </section>
             <LoginComponent />
@@ -50,7 +85,7 @@ export default function Home() {
               <div>
                 <h1 className="text-4xl font-semibold">Welcome back, {user.hostName}</h1>
                 <p className="mt-3 max-w-2xl text-zinc-200">
-                  Keep your host profile current, stage new shows, and hand structured playlist requirements to the backend when it is ready.
+                  Keep your host profile current, stage new shows, and move approved programming toward a 24/7 Alpine Groove Guide stream.
                 </p>
               </div>
               <div className="flex gap-3">
@@ -68,6 +103,7 @@ export default function Home() {
 
       <section className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+          {dashboardMessage && <p className="rounded-md border border-amber-300/40 bg-amber-950/40 p-3 text-sm text-amber-100 sm:col-span-3 lg:col-span-1">{dashboardMessage}</p>}
           {statCards.map((card) => (
             <article key={card.label} className="rounded-md border border-white/10 bg-zinc-900 p-5">
               <p className="text-sm text-zinc-400">{card.label}</p>
@@ -80,16 +116,20 @@ export default function Home() {
         <div className="rounded-md border border-white/10 bg-zinc-900">
           <div className="border-b border-white/10 p-5">
             <h2 className="text-xl font-semibold">Today&apos;s Programming</h2>
-            <p className="mt-1 text-sm text-zinc-400">Local frontend data now, backend schedule data later.</p>
+            <p className="mt-1 text-sm text-zinc-400">Scheduled shows from the Rails station queue.</p>
           </div>
           <div className="divide-y divide-white/10">
-            {upcoming.map((item) => (
-              <div key={item.show} className="grid grid-cols-[80px_1fr_auto] items-center gap-4 p-5">
-                <span className="font-mono text-sm text-zinc-400">{item.time}</span>
-                <span className="font-medium text-white">{item.show}</span>
-                <span className="rounded-full border border-amber-300/40 px-3 py-1 text-xs text-amber-100">{item.status}</span>
+            {scheduledShows.length === 0 ? (
+              <p className="p-5 text-sm text-zinc-400">No scheduled shows yet.</p>
+            ) : (
+              scheduledShows.map((show) => (
+              <div key={show.id} className="grid grid-cols-[120px_1fr_auto] items-center gap-4 p-5">
+                <span className="font-mono text-sm text-zinc-400">{new Date(show.scheduled_at || "").toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>
+                <span className="font-medium text-white">{show.name}</span>
+                <span className="rounded-full border border-amber-300/40 px-3 py-1 text-xs text-amber-100">{show.status}</span>
               </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </section>

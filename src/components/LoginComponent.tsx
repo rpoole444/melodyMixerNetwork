@@ -3,9 +3,9 @@ import { FormEvent, useState } from "react";
 import { useUser } from "@/contexts/UserContext";
 
 const LoginComponent = () => {
-  const [email, setEmail] = useState("demo@melody.test");
-  const [password, setPassword] = useState("demo123");
-  const { login, loginDemo, status, error } = useUser();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { login, status, error } = useUser();
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,20 +48,13 @@ const LoginComponent = () => {
 
         {error && <p className="rounded-md border border-red-400/40 bg-red-950/40 p-3 text-sm text-red-100">{error}</p>}
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div>
           <button
-            className="rounded-md bg-amber-300 px-4 py-3 font-semibold text-zinc-950 hover:bg-amber-200 disabled:cursor-wait disabled:opacity-70"
+            className="w-full rounded-md bg-amber-300 px-4 py-3 font-semibold text-zinc-950 hover:bg-amber-200 disabled:cursor-wait disabled:opacity-70"
             type="submit"
             disabled={status === "loading"}
           >
             {status === "loading" ? "Signing In" : "Sign In"}
-          </button>
-          <button
-            className="rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-amber-300"
-            type="button"
-            onClick={loginDemo}
-          >
-            Demo Mode
           </button>
         </div>
       </form>
