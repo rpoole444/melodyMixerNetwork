@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import { api, PlaylistRecord } from "@/lib/api";
+import { formatStationDateTime, STATION_TIME_LABEL } from "@/lib/stationTime";
 import { useEffect, useMemo, useState } from "react";
 
 const STREAM_URL = process.env.NEXT_PUBLIC_STREAM_URL || "";
@@ -7,7 +8,7 @@ const STREAM_URL = process.env.NEXT_PUBLIC_STREAM_URL || "";
 const showDurationSeconds = (show: PlaylistRecord) => {
   const songDuration = show.songs.reduce((sum, song) => sum + (song.duration || 0), 0);
   if (songDuration > 0) return songDuration;
-  return show.full_show_audio_file ? 3600 : 0;
+  return show.full_show_audio_file?.duration || 0;
 };
 
 const formatDuration = (seconds: number) => {
@@ -98,7 +99,7 @@ const AlpineGrooveGuide = () => {
               <>
                 <p className="mt-2 text-zinc-300">{currentShow.description}</p>
                 <p className="mt-3 text-sm text-zinc-400">
-                  {new Date(currentShow.scheduled_at || "").toLocaleString()} - {formatDuration(showDurationSeconds(currentShow))}
+                  {formatStationDateTime(currentShow.scheduled_at)} - {formatDuration(showDurationSeconds(currentShow))}
                 </p>
               </>
             )}
@@ -109,7 +110,7 @@ const AlpineGrooveGuide = () => {
             <h2 className="mt-2 text-2xl font-semibold">{nextShow?.name || "No upcoming show scheduled"}</h2>
             {nextShow && (
               <p className="mt-3 text-sm text-zinc-400">
-                {new Date(nextShow.scheduled_at || "").toLocaleString()} - {nextShow.host_name}
+                {formatStationDateTime(nextShow.scheduled_at)} - {nextShow.host_name}
               </p>
             )}
           </section>
@@ -119,7 +120,7 @@ const AlpineGrooveGuide = () => {
           <div className="flex flex-col gap-3 border-b border-white/10 p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-xl font-semibold">Station Schedule</h2>
-              <p className="mt-1 text-sm text-zinc-400">Scheduled shows approved by station admins.</p>
+              <p className="mt-1 text-sm text-zinc-400">Scheduled shows approved by station admins. All times are {STATION_TIME_LABEL}.</p>
             </div>
             <button type="button" onClick={loadSchedule} className="w-fit rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-amber-300">
               Refresh
@@ -131,8 +132,8 @@ const AlpineGrooveGuide = () => {
             {upcomingShows.map((show) => (
               <article key={show.id} className="grid gap-4 p-5 sm:grid-cols-[140px_1fr_auto] sm:items-center">
                 <div>
-                  <p className="font-mono text-sm text-amber-200">{new Date(show.scheduled_at || "").toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</p>
-                  <p className="text-xs text-zinc-500">{new Date(show.scheduled_at || "").toLocaleDateString()}</p>
+                  <p className="font-mono text-sm text-amber-200">{formatStationDateTime(show.scheduled_at, false)}</p>
+                  <p className="text-xs text-zinc-500">{new Intl.DateTimeFormat("en-US", { timeZone: "America/Denver", month: "short", day: "numeric" }).format(new Date(show.scheduled_at || ""))}</p>
                 </div>
                 <div>
                   <h3 className="font-semibold">{show.name}</h3>

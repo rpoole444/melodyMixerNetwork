@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import { useUser } from "@/contexts/UserContext";
 import { api, PlaylistRecord } from "@/lib/api";
+import { formatStationDateTime, stationInputToIso, STATION_TIME_LABEL } from "@/lib/stationTime";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -173,7 +174,7 @@ const StationReview = () => {
 
     setBusyId(show.id);
     try {
-      updateShow(await api.scheduleShow(show.id, scheduledAt));
+      updateShow(await api.scheduleShow(show.id, stationInputToIso(scheduledAt)));
       setMessage(`${show.name} is scheduled.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not schedule show.");
@@ -399,6 +400,12 @@ const StationReview = () => {
                 <div>
                   <h3 className="text-lg font-semibold">Show Lineup</h3>
                   <p className="mt-1 text-sm text-zinc-400">Estimated length: {formatDuration(showDurationSeconds(show))}</p>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                    <span className={`rounded-full px-2 py-1 ${show.contains_explicit_content ? "bg-red-400/15 text-red-200" : "bg-emerald-400/15 text-emerald-200"}`}>
+                      {show.contains_explicit_content ? "Explicit content" : "No explicit content reported"}
+                    </span>
+                    {show.confirmations_recorded_at && <span className="rounded-full bg-amber-300/15 px-2 py-1 text-amber-100">Host confirmations recorded</span>}
+                  </div>
                   <div className="mt-3 divide-y divide-white/10 rounded-md border border-white/10">
                     {show.songs.length === 0 ? (
                       <p className="p-4 text-sm text-zinc-400">No lineup items. This may be a full-show upload.</p>
@@ -433,7 +440,7 @@ const StationReview = () => {
                     />
                   </label>
                   <label className="block text-sm font-medium text-zinc-200" htmlFor={`schedule-${show.id}`}>
-                    Air Date and Time
+                    Air Date and Time ({STATION_TIME_LABEL})
                     <input
                       id={`schedule-${show.id}`}
                       type="datetime-local"
@@ -442,7 +449,7 @@ const StationReview = () => {
                       className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300"
                     />
                   </label>
-                  {show.scheduled_at && <p className="mt-3 text-sm text-zinc-400">Scheduled: {new Date(show.scheduled_at).toLocaleString()}</p>}
+                  {show.scheduled_at && <p className="mt-3 text-sm text-zinc-400">Scheduled: {formatStationDateTime(show.scheduled_at)}</p>}
                   {show.full_show_audio_file?.url && (
                     <div className="mt-5">
                       <p className="mb-2 text-sm font-medium text-zinc-200">Full Show Audio</p>

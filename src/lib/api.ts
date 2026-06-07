@@ -7,6 +7,7 @@ export type ApiUser = {
   email: string;
   phone: string;
   role: "host" | "admin";
+  accountStatus?: "active" | "suspended";
   profileImage?: string;
 };
 
@@ -27,12 +28,25 @@ export type HostInvitationRecord = {
   code: string;
   email?: string;
   notes?: string;
-  status: "active" | "used" | "expired";
+  status: "active" | "used" | "expired" | "revoked";
   expires_at?: string;
   used_at?: string;
+  revoked_at?: string;
   invited_by?: string;
   used_by?: string;
   created_at?: string;
+};
+
+export type StationHostRecord = {
+  id: number;
+  first_name: string;
+  last_name: string;
+  host_name?: string;
+  email: string;
+  account_status: "active" | "suspended";
+  shows_count: number;
+  audio_count: number;
+  joined_at: string;
 };
 
 export type TrackInput = {
@@ -55,6 +69,11 @@ export type ShowInput = {
   status: "draft" | "scheduled" | "ready" | "submitted";
   scheduledAt?: string;
   fullShowFile?: File | null;
+  fullShowDuration?: number;
+  audioAuthorized: boolean;
+  metadataConfirmed: boolean;
+  explicitContentConfirmed: boolean;
+  containsExplicitContent: boolean;
   tracks: TrackInput[];
 };
 
@@ -111,6 +130,11 @@ export type PlaylistRecord = {
   scheduled_at?: string;
   review_notes?: string;
   reviewed_at?: string;
+  audio_authorized?: boolean;
+  metadata_confirmed?: boolean;
+  explicit_content_confirmed?: boolean;
+  contains_explicit_content?: boolean;
+  confirmations_recorded_at?: string;
   delivery_status: "not_sent" | "queued" | "sent" | "failed";
   delivery_target?: string;
   delivery_reference?: string;
@@ -120,6 +144,7 @@ export type PlaylistRecord = {
     id: number;
     name: string;
     url: string;
+    duration?: number;
   } | null;
   songs: Array<{
     id: number;
@@ -196,6 +221,28 @@ export type StreamManifest = {
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api/v1";
 
+const xhrRequest = <T>(url: string, method: string, body: FormData, onProgress?: (percent: number) => void) =>
+  new Promise<T>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open(method, url);
+    request.withCredentials = true;
+    request.responseType = "json";
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress?.(Math.round((event.loaded / event.total) * 100));
+    };
+    request.onload = () => {
+      const responseBody = request.response || {};
+      if (request.status >= 200 && request.status < 300) {
+        onProgress?.(100);
+        resolve(responseBody as T);
+      } else {
+        reject(new Error(responseBody?.error || responseBody?.errors?.join?.(", ") || "The backend rejected this request."));
+      }
+    };
+    request.onerror = () => reject(new Error("The upload was interrupted. Check your connection and try again."));
+    request.send(body);
+  });
+
 const normalizeUser = (payload: any): ApiUser => {
   const attributes = payload?.data?.attributes ?? payload?.attributes ?? payload;
 
@@ -208,6 +255,7 @@ const normalizeUser = (payload: any): ApiUser => {
     email: attributes?.email ?? "",
     phone: attributes?.phone_number ?? attributes?.phone ?? "",
     role: attributes?.role === "admin" ? "admin" : "host",
+    accountStatus: attributes?.account_status === "suspended" ? "suspended" : "active",
     profileImage: attributes?.profile_image ?? attributes?.profileImage ?? "/hostpic.jpg",
   };
 };
@@ -230,9 +278,14 @@ const buildShowFormData = (show: ShowInput) => {
   formData.append("playlist[host_name]", show.hostName);
   formData.append("playlist[status]", show.status);
   formData.append("playlist[scheduled_at]", show.scheduledAt || "");
+  formData.append("playlist[audio_authorized]", String(show.audioAuthorized));
+  formData.append("playlist[metadata_confirmed]", String(show.metadataConfirmed));
+  formData.append("playlist[explicit_content_confirmed]", String(show.explicitContentConfirmed));
+  formData.append("playlist[contains_explicit_content]", String(show.containsExplicitContent));
 
   if (show.fullShowFile) {
     formData.append("playlist[full_show_file]", show.fullShowFile);
+    if (show.fullShowDuration) formData.append("playlist[full_show_duration]", String(show.fullShowDuration));
   }
 
   show.tracks.forEach((track, index) => {
@@ -327,6 +380,28 @@ export const api = {
     return handleResponse(response);
   },
 
+  async revokeHostInvitation(id: number): Promise<HostInvitationRecord> {
+    const response = await fetch(`${API_BASE_URL}/host_invitations/${id}/revoke`, {
+      method: "PATCH",
+      credentials: "include",
+    });
+    return handleResponse(response);
+  },
+
+  async listStationHosts(): Promise<StationHostRecord[]> {
+    const response = await fetch(`${API_BASE_URL}/station_hosts`, { credentials: "include" });
+    return handleResponse(response);
+  },
+
+  async setHostStatus(id: number, status: "active" | "suspended"): Promise<StationHostRecord> {
+    const action = status === "active" ? "reactivate" : "suspend";
+    const response = await fetch(`${API_BASE_URL}/station_hosts/${id}/${action}`, {
+      method: "PATCH",
+      credentials: "include",
+    });
+    return handleResponse(response);
+  },
+
   async updateUser(user: ApiUser): Promise<ApiUser> {
     if (!user.id) return user;
 
@@ -358,7 +433,7 @@ export const api = {
     return handleResponse(response);
   },
 
-  async uploadAudioFile(input: AudioFileInput): Promise<AudioFileRecord> {
+  async uploadAudioFile(input: AudioFileInput, onProgress?: (percent: number) => void): Promise<AudioFileRecord> {
     const formData = new FormData();
     formData.append("audio_file[title]", input.title);
     formData.append("audio_file[name]", input.file.name);
@@ -371,13 +446,7 @@ export const api = {
     formData.append("audio_file[visibility]", input.visibility);
     formData.append("audio_file[file]", input.file);
 
-    const response = await fetch(`${API_BASE_URL}/audio_files`, {
-      method: "POST",
-      body: formData,
-      credentials: "include",
-    });
-
-    return handleResponse(response);
+    return xhrRequest<AudioFileRecord>(`${API_BASE_URL}/audio_files`, "POST", formData, onProgress);
   },
 
   async updateAudioFileMetadata(id: number, input: AudioFileMetadataInput): Promise<AudioFileRecord> {
@@ -391,14 +460,8 @@ export const api = {
     return handleResponse(response);
   },
 
-  async createShow(show: ShowInput) {
-    const response = await fetch(`${API_BASE_URL}/playlists`, {
-      method: "POST",
-      body: buildShowFormData(show),
-      credentials: "include",
-    });
-
-    return handleResponse(response);
+  async createShow(show: ShowInput, onProgress?: (percent: number) => void): Promise<PlaylistRecord> {
+    return xhrRequest<PlaylistRecord>(`${API_BASE_URL}/playlists`, "POST", buildShowFormData(show), onProgress);
   },
 
   async getShow(id: number): Promise<PlaylistRecord> {
@@ -409,14 +472,28 @@ export const api = {
     return handleResponse(response);
   },
 
-  async updateShow(id: number, show: ShowInput): Promise<PlaylistRecord> {
-    const response = await fetch(`${API_BASE_URL}/playlists/${id}`, {
-      method: "PATCH",
-      body: buildShowFormData(show),
-      credentials: "include",
-    });
+  async updateShow(id: number, show: ShowInput, onProgress?: (percent: number) => void): Promise<PlaylistRecord> {
+    return xhrRequest<PlaylistRecord>(`${API_BASE_URL}/playlists/${id}`, "PATCH", buildShowFormData(show), onProgress);
+  },
 
-    return handleResponse(response);
+  async requestPasswordReset(email: string): Promise<string> {
+    const response = await fetch(`${API_BASE_URL}/password_resets`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const body = await handleResponse(response);
+    return body.message;
+  },
+
+  async resetPassword(token: string, email: string, password: string, passwordConfirmation: string): Promise<string> {
+    const response = await fetch(`${API_BASE_URL}/password_resets/${token}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, password_confirmation: passwordConfirmation }),
+    });
+    const body = await handleResponse(response);
+    return body.message;
   },
 
   async listStationShows(): Promise<PlaylistRecord[]> {

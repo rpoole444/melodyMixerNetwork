@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import LoginComponent from "@/components/LoginComponent";
 import { useUser } from "@/contexts/UserContext";
 import { api, PlaylistRecord } from "@/lib/api";
+import { formatStationDateTime } from "@/lib/stationTime";
 import { useEffect, useMemo, useState } from "react";
 
 const formatDuration = (seconds: number) => {
@@ -124,7 +125,7 @@ export default function Home() {
             ) : (
               scheduledShows.map((show) => (
               <div key={show.id} className="grid grid-cols-[120px_1fr_auto] items-center gap-4 p-5">
-                <span className="font-mono text-sm text-zinc-400">{new Date(show.scheduled_at || "").toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>
+                <span className="font-mono text-sm text-zinc-400">{formatStationDateTime(show.scheduled_at, false)}</span>
                 <span className="font-medium text-white">{show.name}</span>
                 <span className="rounded-full border border-amber-300/40 px-3 py-1 text-xs text-amber-100">{show.status}</span>
               </div>

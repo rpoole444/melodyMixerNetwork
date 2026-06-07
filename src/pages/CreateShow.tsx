@@ -3,6 +3,7 @@
 import Header from "@/components/Header";
 import { useUser } from "@/contexts/UserContext";
 import { api, AudioFileRecord, PlaylistRecord, ShowInput, TrackInput } from "@/lib/api";
+import { formatFileSize, validateAudioFile } from "@/lib/audioValidation";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -76,6 +77,7 @@ const CreateShow = () => {
   const [draftTrack, setDraftTrack] = useState<DraftTrack>(emptyTrack);
   const [trackFile, setTrackFile] = useState<File | null>(null);
   const [fullShowFile, setFullShowFile] = useState<File | null>(null);
+  const [fullShowDuration, setFullShowDuration] = useState<number | undefined>();
   const [showTitle, setShowTitle] = useState("");
   const [showDescription, setShowDescription] = useState("");
   const [status, setStatus] = useState<ShowInput["status"]>("draft");
@@ -94,6 +96,12 @@ const CreateShow = () => {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recordedAudioURL, setRecordedAudioURL] = useState("");
+  const [audioAuthorized, setAudioAuthorized] = useState(false);
+  const [metadataConfirmed, setMetadataConfirmed] = useState(false);
+  const [explicitContentConfirmed, setExplicitContentConfirmed] = useState(false);
+  const [containsExplicitContent, setContainsExplicitContent] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadFailed, setUploadFailed] = useState(false);
 
   useEffect(() => {
     if (!audioBlob) return;
@@ -120,9 +128,14 @@ const CreateShow = () => {
       status,
       scheduledAt,
       fullShowFile,
+      fullShowDuration,
+      audioAuthorized,
+      metadataConfirmed,
+      explicitContentConfirmed,
+      containsExplicitContent,
       tracks,
     }),
-    [showTitle, showDescription, hostName, status, scheduledAt, fullShowFile, tracks],
+    [showTitle, showDescription, hostName, status, scheduledAt, fullShowFile, fullShowDuration, audioAuthorized, metadataConfirmed, explicitContentConfirmed, containsExplicitContent, tracks],
   );
 
   const backendPreview = useMemo(
@@ -200,7 +213,12 @@ const CreateShow = () => {
     setStatus(["draft", "submitted", "ready", "scheduled"].includes(show.status) ? (show.status as ShowInput["status"]) : "draft");
     setScheduledAt(show.scheduled_at ? show.scheduled_at.slice(0, 16) : "");
     setFullShowFile(null);
+    setFullShowDuration(show.full_show_audio_file?.duration);
     setExistingFullShowName(show.full_show_audio_file?.name || "");
+    setAudioAuthorized(Boolean(show.audio_authorized));
+    setMetadataConfirmed(Boolean(show.metadata_confirmed));
+    setExplicitContentConfirmed(Boolean(show.explicit_content_confirmed));
+    setContainsExplicitContent(Boolean(show.contains_explicit_content));
     setTracks(
       [...show.songs]
         .sort((a, b) => (a.position || 0) - (b.position || 0))
@@ -259,10 +277,19 @@ const CreateShow = () => {
   const handleFileChange = async (files: FileList | null) => {
     const file = files?.[0];
     if (!file) return;
+    const validationMessage = validateAudioFile(file);
+    if (validationMessage) {
+      setMessage(validationMessage);
+      return;
+    }
 
     setTrackFile(file);
     const inferred = inferMetadataFromFilename(file.name);
     const duration = await readAudioDuration(file);
+    if (!duration) {
+      setMessage("We could not read this audio file. It may be damaged or use an unsupported codec. Re-export it as MP3 or WAV and try again.");
+      return;
+    }
 
     setDraftTrack((current) => ({
       ...current,
@@ -274,12 +301,24 @@ const CreateShow = () => {
     }));
   };
 
-  const handleFullShowFileChange = (files: FileList | null) => {
+  const handleFullShowFileChange = async (files: FileList | null) => {
     const file = files?.[0];
     if (!file) return;
+    const validationMessage = validateAudioFile(file);
+    if (validationMessage) {
+      setMessage(validationMessage);
+      return;
+    }
 
+    const duration = await readAudioDuration(file);
+    if (!duration) {
+      setMessage("We could not read the length of that audio file. Try exporting it as MP3 or WAV.");
+      return;
+    }
     setFullShowFile(file);
+    setFullShowDuration(duration);
     setExistingFullShowName("");
+    setMessage(`Full show ready: ${file.name} · ${formatFileSize(file.size)} · ${secondsToInput(duration)}`);
   };
 
   const startRecording = async () => {
@@ -319,7 +358,9 @@ const CreateShow = () => {
 
     if (trackFile || audioBlob) {
       setIsUploadingTrack(true);
-      setMessage("Uploading audio to Rails...");
+      setUploadFailed(false);
+      setUploadProgress(0);
+      setMessage("Uploading audio...");
 
       try {
         const uploadFile = trackFile || new File([audioBlob as Blob], `${draftTrack.title || "host-break"}.webm`, { type: "audio/webm" });
@@ -333,7 +374,7 @@ const CreateShow = () => {
           kind: audioBlob ? "host_break" : "track",
           visibility: "private",
           file: uploadFile,
-        });
+        }, setUploadProgress);
         fileUrl = audioFile.url;
         fileName = audioFile.name;
         if (!draftTrack.length && audioFile.duration) {
@@ -342,10 +383,12 @@ const CreateShow = () => {
         setLibraryTracks((current) => [audioFile as AudioFileRecord, ...current]);
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Audio upload failed.");
+        setUploadFailed(true);
         setIsUploadingTrack(false);
         return;
       } finally {
         setIsUploadingTrack(false);
+        setUploadProgress(null);
       }
     }
 
@@ -366,6 +409,7 @@ const CreateShow = () => {
     ]);
     setDraftTrack(emptyTrack);
     setTrackFile(null);
+    setUploadFailed(false);
     setAudioBlob(null);
     setRecordedAudioURL("");
     setMessage("");
@@ -508,14 +552,20 @@ const CreateShow = () => {
       return;
     }
 
+    if (nextStatus === "submitted" && (!audioAuthorized || !metadataConfirmed || !explicitContentConfirmed)) {
+      setMessage("Complete the three host confirmations before submitting. You can still save this as a draft.");
+      return;
+    }
+
     setIsSavingShow(true);
+    setUploadProgress(fullShowFile ? 0 : null);
     const isEditing = Boolean(editingShowId);
     setMessage(nextStatus === "submitted" ? "Submitting show to Rails..." : isEditing ? "Updating show draft in Rails..." : "Saving show draft to Rails...");
 
     try {
       const savedShow = editingShowId
-        ? await api.updateShow(editingShowId, { ...showPayload, status: nextStatus })
-        : await api.createShow({ ...showPayload, status: nextStatus });
+        ? await api.updateShow(editingShowId, { ...showPayload, status: nextStatus }, setUploadProgress)
+        : await api.createShow({ ...showPayload, status: nextStatus }, setUploadProgress);
       hydrateShow(savedShow);
       if (!editingShowId) {
         router.replace(`/CreateShow?showId=${savedShow.id}`, undefined, { shallow: true });
@@ -527,6 +577,7 @@ const CreateShow = () => {
       setMessage(error instanceof Error ? `${error.message} Draft saved locally.` : "Show save failed. Draft saved locally.");
     } finally {
       setIsSavingShow(false);
+      setUploadProgress(null);
     }
   };
 
@@ -551,7 +602,7 @@ const CreateShow = () => {
 
           <section className="mt-8 grid gap-3 sm:grid-cols-3">
             {[
-              ["1", "Show Info", "Name the show and set the air status."],
+              ["1", "Show Info", "Name the show and describe the vibe."],
               ["2", "Audio", "Upload a full show or add songs and breaks."],
               ["3", "Lineup", "Review the final order before saving."],
             ].map(([step, title, copy]) => (
@@ -574,27 +625,14 @@ const CreateShow = () => {
                 Host
                 <input id="hostName" value={hostName} disabled className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-zinc-400" />
               </label>
-              <label className="block text-sm font-medium text-zinc-200" htmlFor="status">
-                Status
-                <select
-                  id="status"
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as ShowInput["status"])}
-                  className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300"
-                >
-                  <option value="draft">Draft</option>
-                  <option value="ready">Ready</option>
-                  <option value="scheduled">Scheduled</option>
-                </select>
-              </label>
               <label className="block text-sm font-medium text-zinc-200" htmlFor="showTitle">
                 Show Title
                 <input id="showTitle" value={showTitle} onChange={(e) => setShowTitle(e.target.value)} className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300" />
               </label>
-              <label className="block text-sm font-medium text-zinc-200" htmlFor="scheduledAt">
-                Air Date and Time
-                <input id="scheduledAt" type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300" />
-              </label>
+              <div className="rounded-md border border-white/10 bg-zinc-950 p-4 text-sm text-zinc-300">
+                <p className="font-semibold text-white">You focus on the show.</p>
+                <p className="mt-1">Save a draft while you work, then submit it. The station team handles approval and airtime.</p>
+              </div>
               <label className="block text-sm font-medium text-zinc-200 md:col-span-2" htmlFor="showDescription">
                 Show Notes
                 <textarea id="showDescription" value={showDescription} onChange={(e) => setShowDescription(e.target.value)} rows={4} className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300" />
@@ -602,7 +640,7 @@ const CreateShow = () => {
               <div className="md:col-span-2">
                 <p className="text-sm font-medium text-zinc-200">Option A: Upload Complete Show</p>
                 <div className="mt-2 flex flex-col gap-3 rounded-md border border-zinc-700 bg-zinc-950 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-sm text-zinc-300">{fullShowFile ? fullShowFile.name : existingFullShowName ? `Current full show: ${existingFullShowName}` : "Use this when the show is already mixed into one audio file."}</span>
+                  <span className="text-sm text-zinc-300">{fullShowFile ? `${fullShowFile.name} · ${formatFileSize(fullShowFile.size)} · ${secondsToInput(fullShowDuration)}` : existingFullShowName ? `Current full show: ${existingFullShowName}` : "Use this when the show is already mixed into one audio file."}</span>
                   <input ref={fullShowInputRef} type="file" accept={audioAccept} className="hidden" onChange={(e) => handleFullShowFileChange(e.target.files)} />
                   <button type="button" onClick={openFullShowPicker} className="rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-amber-300">
                     Select Full Show
@@ -645,7 +683,7 @@ const CreateShow = () => {
                 {isRecording ? "Stop Recording" : "Record Break"}
               </button>
               <button type="button" onClick={addTrack} disabled={isUploadingTrack} className="rounded-md bg-amber-300 px-4 py-3 font-semibold text-zinc-950 hover:bg-amber-200 disabled:cursor-wait disabled:opacity-70">
-                {isUploadingTrack ? "Uploading" : "Add to Lineup"}
+                {isUploadingTrack ? `Uploading ${uploadProgress || 0}%` : uploadFailed ? "Retry Upload" : "Add to Lineup"}
               </button>
             </div>
 
@@ -666,6 +704,29 @@ const CreateShow = () => {
               </div>
             </div>
             {message && <p className="mt-5 rounded-md border border-amber-300/40 bg-amber-950/40 p-3 text-sm text-amber-100">{message}</p>}
+            {uploadProgress !== null && (
+              <div className="mt-5">
+                <div className="flex justify-between text-xs text-zinc-300"><span>Uploading audio</span><span>{uploadProgress}%</span></div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-800"><div className="h-full bg-amber-300 transition-all" style={{ width: `${uploadProgress}%` }} /></div>
+              </div>
+            )}
+            <div className="mt-5 rounded-md border border-white/10 bg-zinc-950 p-4">
+              <h2 className="font-semibold">Ready to submit?</h2>
+              <p className="mt-1 text-sm text-zinc-400">Confirm these when the lineup and audio are final.</p>
+              <div className="mt-4 space-y-3 text-sm">
+                <label className="flex items-start gap-3"><input type="checkbox" checked={audioAuthorized} onChange={(event) => setAudioAuthorized(event.target.checked)} className="mt-1 h-4 w-4 accent-amber-300" /><span>I have permission to provide this audio for station playback.</span></label>
+                <label className="flex items-start gap-3"><input type="checkbox" checked={metadataConfirmed} onChange={(event) => setMetadataConfirmed(event.target.checked)} className="mt-1 h-4 w-4 accent-amber-300" /><span>The artist, title, and lineup information are accurate.</span></label>
+                <fieldset className="rounded-md border border-white/10 p-3">
+                  <legend className="px-1 font-medium">Does this show contain explicit content?</legend>
+                  <div className="mt-2 flex gap-5">
+                    <label className="flex items-center gap-2"><input type="radio" name="explicit-content" checked={!containsExplicitContent} onChange={() => setContainsExplicitContent(false)} className="accent-amber-300" />No</label>
+                    <label className="flex items-center gap-2"><input type="radio" name="explicit-content" checked={containsExplicitContent} onChange={() => setContainsExplicitContent(true)} className="accent-amber-300" />Yes</label>
+                  </div>
+                </fieldset>
+                <label className="flex items-start gap-3"><input type="checkbox" checked={explicitContentConfirmed} onChange={(event) => setExplicitContentConfirmed(event.target.checked)} className="mt-1 h-4 w-4 accent-amber-300" /><span>I reviewed the full show and the explicit-content answer above is accurate.</span></label>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-zinc-500">These confirmations support station review. They do not replace the station’s broadcast licensing responsibilities.</p>
+            </div>
             <button type="button" onClick={() => saveShow("draft")} disabled={isSavingShow} className="mt-5 w-full rounded-md bg-amber-300 px-4 py-3 font-semibold text-zinc-950 hover:bg-amber-200 disabled:cursor-wait disabled:opacity-70">
               {isSavingShow ? "Saving" : "Save Draft"}
             </button>
@@ -726,15 +787,15 @@ const CreateShow = () => {
                   <div className="divide-y divide-white/10">
                     {audioFiles.map((audioFile) => (
                       <article key={audioFile.id} className="p-5">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
                             <p className="text-xs uppercase tracking-[0.2em] text-amber-300">{audioFile.visibility} {audioFile.genre && `- ${audioFile.genre}`}</p>
                             <h3 className="mt-1 font-semibold">{audioFile.title || audioFile.name}</h3>
                             <p className="text-sm text-zinc-400">
                               {audioFile.artist || "Unknown Artist"} {audioFile.album && `- ${audioFile.album}`} {audioFile.duration ? `- ${audioFile.duration}s` : "- missing duration"}
                             </p>
                           </div>
-                          <div className="flex shrink-0 gap-2">
+                          <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex">
                             <button type="button" onClick={() => startAudioMetadataEdit(audioFile)} className="rounded-md border border-white/15 px-3 py-2 text-sm text-zinc-200 hover:border-amber-300">
                               Edit
                             </button>
@@ -805,7 +866,7 @@ const CreateShow = () => {
               ) : (
                 tracks.map((track, index) => (
                   <article key={track.id} className="p-5">
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <button
                         type="button"
                         onClick={() => setExpandedTrackId((current) => (current === track.id ? null : track.id))}
@@ -815,7 +876,7 @@ const CreateShow = () => {
                         <h3 className="mt-1 truncate font-semibold">{track.title}</h3>
                         <p className="truncate text-sm text-zinc-400">{track.artist} {track.length && `- ${track.length}`}</p>
                       </button>
-                      <div className="flex shrink-0 items-center gap-2">
+                      <div className="grid grid-cols-3 gap-2 sm:flex sm:shrink-0 sm:items-center">
                         <button type="button" onClick={() => moveTrack(track.id, "up")} disabled={index === 0} className="rounded-md border border-white/15 px-3 py-2 text-sm text-zinc-200 hover:border-amber-300 disabled:cursor-not-allowed disabled:opacity-40">
                           Up
                         </button>
@@ -879,7 +940,7 @@ const CreateShow = () => {
             </div>
           </section>
 
-          <details className="rounded-md border border-white/10 bg-zinc-900 p-5">
+          <details className="hidden rounded-md border border-white/10 bg-zinc-900 p-5 lg:block">
             <summary className="cursor-pointer text-xl font-semibold">Developer Preview</summary>
             <pre className="mt-4 max-h-80 overflow-auto rounded-md bg-zinc-950 p-4 text-xs text-zinc-300">
               {JSON.stringify(backendPreview, null, 2)}

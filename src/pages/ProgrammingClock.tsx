@@ -1,28 +1,12 @@
 import Header from "@/components/Header";
 import { useUser } from "@/contexts/UserContext";
 import { api, PlaylistRecord } from "@/lib/api";
+import { formatStationDateTime, stationDateInput, stationInputToIso, stationMinutesIntoDay, STATION_TIME_LABEL } from "@/lib/stationTime";
 import { useEffect, useMemo, useState } from "react";
 
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 
-const toDateInput = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-const toDateTimeInput = (date: Date) => {
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `${toDateInput(date)}T${hours}:${minutes}`;
-};
-
-const formatClockTime = (date: Date) =>
-  date.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+const formatClockTime = (date: Date) => formatStationDateTime(date.toISOString(), false);
 
 const formatDuration = (seconds: number) => {
   const hours = Math.floor(seconds / 3600);
@@ -39,20 +23,18 @@ const showDurationSeconds = (show: PlaylistRecord) => {
   const songDuration = show.songs.reduce((sum, song) => sum + (song.duration || 0), 0);
   if (songDuration > 0) return songDuration;
 
-  return show.full_show_audio_file ? 3600 : 0;
+  return show.full_show_audio_file?.duration || 0;
 };
 
 const sameLocalDay = (value: string | undefined, day: string) => {
   if (!value) return false;
-  return toDateInput(new Date(value)) === day;
+  return stationDateInput(new Date(value)) === day;
 };
-
-const startOfDay = (day: string) => new Date(`${day}T00:00`);
 
 const ProgrammingClock = () => {
   const { user } = useUser();
   const [shows, setShows] = useState<PlaylistRecord[]>([]);
-  const [selectedDay, setSelectedDay] = useState(toDateInput(new Date()));
+  const [selectedDay, setSelectedDay] = useState(stationDateInput(new Date()));
   const [message, setMessage] = useState("");
   const [scheduleById, setScheduleById] = useState<Record<number, string>>({});
   const [busyId, setBusyId] = useState<number | null>(null);
@@ -88,13 +70,11 @@ const ProgrammingClock = () => {
   );
 
   const clockItems = useMemo(() => {
-    const dayStart = startOfDay(selectedDay).getTime();
-
     return scheduledShows.map((show) => {
       const startsAt = new Date(show.scheduled_at || "");
       const duration = showDurationSeconds(show);
-      const startMinutes = Math.max(0, Math.round((startsAt.getTime() - dayStart) / 60000));
-      const endMinutes = Math.min(1440, startMinutes + Math.max(15, Math.ceil(duration / 60)));
+      const startMinutes = stationMinutesIntoDay(show.scheduled_at || "");
+      const endMinutes = Math.min(1440, startMinutes + Math.ceil(duration / 60));
 
       return {
         show,
@@ -104,9 +84,31 @@ const ProgrammingClock = () => {
         endMinutes,
       };
     });
-  }, [scheduledShows, selectedDay]);
+  }, [scheduledShows]);
 
-  const coverageSeconds = clockItems.reduce((sum, item) => sum + Math.max(0, item.endMinutes - item.startMinutes) * 60, 0);
+  const overlaps = useMemo(
+    () =>
+      clockItems.flatMap((item, index) =>
+        clockItems.slice(index + 1).flatMap((other) =>
+          item.startMinutes < other.endMinutes && item.endMinutes > other.startMinutes
+            ? [{ first: item, second: other }]
+            : [],
+        ),
+      ),
+    [clockItems],
+  );
+
+  const coverageSeconds = useMemo(() => {
+    let coveredMinutes = 0;
+    let rangeEnd = 0;
+
+    clockItems.forEach((item) => {
+      coveredMinutes += Math.max(0, item.endMinutes - Math.max(item.startMinutes, rangeEnd));
+      rangeEnd = Math.max(rangeEnd, item.endMinutes);
+    });
+
+    return coveredMinutes * 60;
+  }, [clockItems]);
   const coveragePercent = Math.min(100, Math.round((coverageSeconds / 86400) * 100));
   const queuedCount = scheduledShows.filter((show) => show.delivery_status === "queued").length;
 
@@ -135,9 +137,20 @@ const ProgrammingClock = () => {
       return;
     }
 
+    const candidateStart = new Date(stationInputToIso(scheduledAt));
+    const candidateEnd = new Date(candidateStart.getTime() + showDurationSeconds(show) * 1000);
+    const conflict = clockItems.find((item) => {
+      const itemEnd = new Date(item.startsAt.getTime() + item.duration * 1000);
+      return candidateStart < itemEnd && candidateEnd > item.startsAt;
+    });
+    if (conflict) {
+      setMessage(`${show.name} overlaps ${conflict.show.name}. Choose a time at or after ${formatClockTime(new Date(conflict.startsAt.getTime() + conflict.duration * 1000))}.`);
+      return;
+    }
+
     setBusyId(show.id);
     try {
-      const nextShow = await api.scheduleShow(show.id, scheduledAt);
+      const nextShow = await api.scheduleShow(show.id, stationInputToIso(scheduledAt));
       setShows((current) => current.map((item) => (item.id === nextShow.id ? nextShow : item)));
       setScheduleById((current) => ({ ...current, [show.id]: "" }));
       setMessage(`${show.name} was placed on the ${selectedDay} clock.`);
@@ -149,9 +162,10 @@ const ProgrammingClock = () => {
   };
 
   const minuteLabel = (minutes: number) => {
-    const date = startOfDay(selectedDay);
-    date.setMinutes(minutes);
-    return formatClockTime(date);
+    const hour = Math.floor(minutes / 60) % 24;
+    const minute = minutes % 60;
+    const suffix = hour >= 12 ? "PM" : "AM";
+    return `${hour % 12 || 12}:${String(minute).padStart(2, "0")} ${suffix}`;
   };
 
   return (
@@ -176,7 +190,7 @@ const ProgrammingClock = () => {
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <label className="text-sm font-medium text-zinc-200" htmlFor="programming-day">
-                  Broadcast Day
+                  Broadcast Day ({STATION_TIME_LABEL})
                   <input
                     id="programming-day"
                     type="date"
@@ -193,7 +207,7 @@ const ProgrammingClock = () => {
 
             {message && <p className="mt-6 rounded-md border border-amber-300/40 bg-amber-950/40 p-3 text-sm text-amber-100">{message}</p>}
 
-            <section className="mt-8 grid gap-4 md:grid-cols-4">
+            <section className="mt-8 grid gap-4 md:grid-cols-5">
               <div className="rounded-md border border-white/10 bg-zinc-900 p-5">
                 <p className="text-sm text-zinc-400">Coverage</p>
                 <p className="mt-2 text-3xl font-semibold">{coveragePercent}%</p>
@@ -214,7 +228,25 @@ const ProgrammingClock = () => {
                 <p className="mt-2 text-3xl font-semibold">{gaps.length}</p>
                 <p className="mt-1 text-sm text-amber-200">15+ minute openings</p>
               </div>
+              <div className={`rounded-md border p-5 ${overlaps.length > 0 ? "border-red-400/50 bg-red-950/30" : "border-white/10 bg-zinc-900"}`}>
+                <p className="text-sm text-zinc-400">Conflicts</p>
+                <p className="mt-2 text-3xl font-semibold">{overlaps.length}</p>
+                <p className={`mt-1 text-sm ${overlaps.length > 0 ? "text-red-200" : "text-emerald-300"}`}>
+                  {overlaps.length > 0 ? "requires attention" : "clock is clear"}
+                </p>
+              </div>
             </section>
+
+            {overlaps.length > 0 && (
+              <section className="mt-6 rounded-md border border-red-400/50 bg-red-950/30 p-5">
+                <h2 className="text-lg font-semibold text-red-100">Schedule conflicts</h2>
+                {overlaps.map(({ first, second }) => (
+                  <p key={`${first.show.id}-${second.show.id}`} className="mt-2 text-sm text-red-100">
+                    {first.show.name} overlaps {second.show.name} at {formatClockTime(second.startsAt)}.
+                  </p>
+                ))}
+              </section>
+            )}
 
             <section className="mt-8 grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
               <div className="rounded-md border border-white/10 bg-zinc-900">
@@ -230,10 +262,12 @@ const ProgrammingClock = () => {
                     </div>
                   ))}
                   <div className="pointer-events-none absolute left-[80px] right-0 top-0 h-full">
-                    {clockItems.map((item) => (
+                    {clockItems.map((item) => {
+                      const hasConflict = overlaps.some(({ first, second }) => first.show.id === item.show.id || second.show.id === item.show.id);
+                      return (
                       <div
                         key={item.show.id}
-                        className="absolute left-3 right-3 overflow-hidden rounded-md border border-amber-300/40 bg-amber-300/15 p-3"
+                        className={`absolute left-3 right-3 overflow-hidden rounded-md border p-3 ${hasConflict ? "border-red-400/70 bg-red-500/25" : "border-amber-300/40 bg-amber-300/15"}`}
                         style={{
                           top: `${(item.startMinutes / 1440) * 100}%`,
                           height: `${Math.max(4, ((item.endMinutes - item.startMinutes) / 1440) * 100)}%`,
@@ -244,7 +278,8 @@ const ProgrammingClock = () => {
                           {formatClockTime(item.startsAt)} - {formatDuration(item.duration)} - {item.show.delivery_status}
                         </p>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>

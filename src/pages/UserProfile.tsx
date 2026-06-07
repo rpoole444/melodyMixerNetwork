@@ -2,6 +2,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { useUser } from "@/contexts/UserContext";
 import { ApiUser, PlaylistRecord, api } from "@/lib/api";
+import { formatStationDateTime } from "@/lib/stationTime";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 const emptyProfile: ApiUser = {
@@ -203,7 +204,7 @@ const UserProfile = () => {
                                 </div>
                                 <div className="text-left sm:text-right">
                                   <span className="inline-block rounded-full border border-amber-300/40 px-3 py-1 text-xs text-amber-100">{show.status}</span>
-                                  {show.scheduled_at && <p className="mt-2 text-xs text-zinc-400">{new Date(show.scheduled_at).toLocaleString()}</p>}
+                                  {show.scheduled_at && <p className="mt-2 text-xs text-zinc-400">{formatStationDateTime(show.scheduled_at)}</p>}
                                   {["draft", "needs_edits"].includes(show.status) && (
                                     <Link
                                       href={`/CreateShow?showId=${show.id}`}
