@@ -11,6 +11,7 @@ const menuItems = [
   { name: "Dashboard", link: "/", adminOnly: false },
   { name: "Listen", link: "/AlpineGrooveGuide", adminOnly: false },
   { name: "Host Profile", link: "/UserProfile", adminOnly: false },
+  { name: "Station Library", link: "/Library", adminOnly: false },
   { name: "Create Show", link: "/CreateShow", adminOnly: false },
   { name: "Station Review", link: "/StationReview", adminOnly: true },
   { name: "Programming Clock", link: "/ProgrammingClock", adminOnly: true },

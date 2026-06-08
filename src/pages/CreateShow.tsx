@@ -3,7 +3,9 @@
 import Header from "@/components/Header";
 import { useUser } from "@/contexts/UserContext";
 import { api, AudioFileRecord, PlaylistRecord, ShowInput, TrackInput } from "@/lib/api";
+import { audioFileToTrack, formatAudioDuration } from "@/lib/audioLibrary";
 import { formatFileSize, validateAudioFile } from "@/lib/audioValidation";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -19,12 +21,6 @@ const emptyTrack: DraftTrack = {
   details: "",
   fileName: "",
   fileUrl: "",
-};
-
-const libraryKindLabels: Record<string, string> = {
-  track: "Tracks",
-  host_break: "Host Breaks",
-  full_show: "Full Shows",
 };
 
 const audioAccept = "audio/*,.mp3,.m4a,.wav,.aiff,.aif,.flac,.ogg,.webm";
@@ -69,6 +65,7 @@ const CreateShow = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fullShowInputRef = useRef<HTMLInputElement>(null);
   const audioChunks = useRef<Blob[]>([]);
+  const librarySelectionHandledRef = useRef("");
 
   const [editingShowId, setEditingShowId] = useState<number | null>(null);
   const [existingFullShowName, setExistingFullShowName] = useState("");
@@ -89,9 +86,7 @@ const CreateShow = () => {
   const [libraryStatus, setLibraryStatus] = useState("");
   const [librarySearch, setLibrarySearch] = useState("");
   const [libraryKind, setLibraryKind] = useState("all");
-  const [libraryVisibility, setLibraryVisibility] = useState("all");
-  const [editingAudioId, setEditingAudioId] = useState<number | null>(null);
-  const [audioMetadataDrafts, setAudioMetadataDrafts] = useState<Record<number, DraftTrack & { genre: string }>>({});
+  const [libraryVisibility, setLibraryVisibility] = useState("shared");
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
@@ -180,15 +175,6 @@ const CreateShow = () => {
         return (a.title || a.name || "").localeCompare(b.title || b.name || "");
       });
   }, [libraryTracks, libraryKind, librarySearch, libraryVisibility]);
-
-  const groupedLibraryTracks = useMemo(() => {
-    return filteredLibraryTracks.reduce<Record<string, AudioFileRecord[]>>((groups, audioFile) => {
-      const key = libraryKindLabels[audioFile.kind] || "Other Audio";
-      groups[key] ||= [];
-      groups[key].push(audioFile);
-      return groups;
-    }, {});
-  }, [filteredLibraryTracks]);
 
   const loadLibraryTracks = async () => {
     setLibraryStatus("Loading station library...");
@@ -372,7 +358,7 @@ const CreateShow = () => {
           duration,
           notes: draftTrack.details,
           kind: audioBlob ? "host_break" : "track",
-          visibility: "private",
+          visibility: "shared",
           file: uploadFile,
         }, setUploadProgress);
         fileUrl = audioFile.url;
@@ -416,22 +402,32 @@ const CreateShow = () => {
   };
 
   const addLibraryTrack = (audioFile: AudioFileRecord) => {
-    setTracks((current) => [
-      ...current,
-      {
-        id: crypto.randomUUID(),
-        audioFileId: audioFile.id,
-        title: audioFile.title || audioFile.name,
-        artist: audioFile.artist || "Unknown Artist",
-        album: audioFile.album || "Single",
-        length: secondsToInput(audioFile.duration),
-        details: audioFile.notes,
-        fileName: audioFile.name,
-        fileUrl: audioFile.url,
-        kind: "upload",
-      },
-    ]);
+    setTracks((current) => [...current, audioFileToTrack(audioFile)]);
+    setMessage(`${audioFile.title || audioFile.name} added to the lineup.`);
   };
+
+  useEffect(() => {
+    if (!router.isReady || libraryTracks.length === 0) return;
+
+    const audioFileId = Number(router.query.audioFileId);
+    const requestedShowId = Number(router.query.showId);
+    if (!audioFileId || (requestedShowId && editingShowId !== requestedShowId)) return;
+
+    const selectionKey = `${requestedShowId || "new"}:${audioFileId}`;
+    if (librarySelectionHandledRef.current === selectionKey) return;
+
+    const audioFile = libraryTracks.find((item) => item.id === audioFileId);
+    if (!audioFile) {
+      setMessage("That library item is no longer available.");
+      return;
+    }
+
+    librarySelectionHandledRef.current = selectionKey;
+    setTracks((current) => [...current, audioFileToTrack(audioFile)]);
+    setMessage(`${audioFile.title || audioFile.name} added to the lineup.`);
+    const query = requestedShowId ? { showId: requestedShowId } : {};
+    router.replace({ pathname: "/CreateShow", query }, undefined, { shallow: true });
+  }, [editingShowId, libraryTracks, router]);
 
   const removeTrack = (id: string) => {
     setTracks((current) => current.filter((track) => track.id !== id));
@@ -453,71 +449,6 @@ const CreateShow = () => {
 
   const updateLineupTrack = (id: string, updates: Partial<TrackInput>) => {
     setTracks((current) => current.map((track) => (track.id === id ? { ...track, ...updates } : track)));
-  };
-
-  const startAudioMetadataEdit = (audioFile: AudioFileRecord) => {
-    setEditingAudioId(audioFile.id);
-    setAudioMetadataDrafts((current) => ({
-      ...current,
-      [audioFile.id]: {
-        title: audioFile.title || audioFile.name,
-        artist: audioFile.artist || "",
-        album: audioFile.album || "",
-        length: secondsToInput(audioFile.duration),
-        details: audioFile.notes || "",
-        genre: audioFile.genre || "",
-        fileName: audioFile.name,
-        fileUrl: audioFile.url,
-      },
-    }));
-  };
-
-  const updateAudioMetadataDraft = (audioFileId: number, field: keyof (DraftTrack & { genre: string }), value: string) => {
-    setAudioMetadataDrafts((current) => ({
-      ...current,
-      [audioFileId]: {
-        ...(current[audioFileId] || { ...emptyTrack, genre: "" }),
-        [field]: value,
-      },
-    }));
-  };
-
-  const saveAudioMetadata = async (audioFileId: number) => {
-    const draft = audioMetadataDrafts[audioFileId];
-    if (!draft) return;
-
-    setMessage("Updating track metadata...");
-
-    try {
-      const updatedAudioFile = await api.updateAudioFileMetadata(audioFileId, {
-        title: draft.title,
-        artist: draft.artist,
-        album: draft.album,
-        genre: draft.genre,
-        duration: Number(draft.length) || 0,
-        notes: draft.details,
-      });
-
-      setLibraryTracks((current) => current.map((audioFile) => (audioFile.id === audioFileId ? updatedAudioFile : audioFile)));
-      setTracks((current) =>
-        current.map((track) =>
-          track.audioFileId === audioFileId
-            ? {
-                ...track,
-                title: updatedAudioFile.title || track.title,
-                artist: updatedAudioFile.artist || track.artist,
-                album: updatedAudioFile.album || track.album,
-                length: secondsToInput(updatedAudioFile.duration) || track.length,
-                details: updatedAudioFile.notes || track.details,
-              }
-            : track,
-        ),
-      );
-      setEditingAudioId(null);
-      setMessage("Track metadata updated.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not update track metadata.");
-    }
   };
 
   const saveLineupTrackToLibrary = async (track: TrackInput) => {
@@ -738,12 +669,10 @@ const CreateShow = () => {
           <section className="rounded-md border border-white/10 bg-zinc-900">
             <div className="flex items-center justify-between border-b border-white/10 p-5">
               <div>
-                <h2 className="text-xl font-semibold">Station Library</h2>
-                <p className="mt-1 text-sm text-zinc-400">Find audio already uploaded by you or shared with the station.</p>
+                <h2 className="text-xl font-semibold">Quick Library Picks</h2>
+                <p className="mt-1 text-sm text-zinc-400">Search the shared crates without leaving your show.</p>
               </div>
-              <button type="button" onClick={loadLibraryTracks} className="rounded-md border border-white/15 px-3 py-2 text-sm text-zinc-200 hover:border-amber-300">
-                Refresh
-              </button>
+              <Link href="/Library" className="rounded-md border border-amber-300/40 px-3 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-300 hover:text-zinc-950">Open Full Library</Link>
             </div>
             <div className="grid gap-3 border-b border-white/10 p-5">
               <input
@@ -768,8 +697,8 @@ const CreateShow = () => {
                   onChange={(e) => setLibraryVisibility(e.target.value)}
                   className="rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-sm text-white outline-none focus:border-amber-300"
                 >
-                  <option value="all">All visibility</option>
                   <option value="shared">Shared station library</option>
+                  <option value="all">Shared and my private audio</option>
                   <option value="private">My private uploads</option>
                   <option value="pending_review">Pending review</option>
                 </select>
@@ -778,80 +707,32 @@ const CreateShow = () => {
             {libraryStatus && <p className="p-5 text-sm text-amber-100">{libraryStatus}</p>}
             {!libraryStatus && libraryTracks.length === 0 && <p className="p-5 text-sm text-zinc-400">No library tracks yet.</p>}
             {!libraryStatus && libraryTracks.length > 0 && filteredLibraryTracks.length === 0 && <p className="p-5 text-sm text-zinc-400">No audio matches these filters.</p>}
-            <div className="max-h-96 overflow-auto">
-              {Object.entries(groupedLibraryTracks).map(([groupName, audioFiles]) => (
-                <div key={groupName} className="border-b border-white/10 last:border-b-0">
-                  <div className="sticky top-0 bg-zinc-900 px-5 py-3">
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-300">{groupName}</h3>
+            <div className="divide-y divide-white/10">
+              {filteredLibraryTracks.slice(0, 8).map((audioFile) => (
+                <article key={audioFile.id} className="p-4">
+                  <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
+                    <div className="min-w-0">
+                      <h3 className="truncate font-semibold">{audioFile.title || audioFile.name}</h3>
+                      <p className="truncate text-sm text-zinc-400">{audioFile.artist || "Unknown Artist"}{audioFile.album ? ` · ${audioFile.album}` : ""}</p>
+                      <p className="mt-1 text-xs text-zinc-500">{audioFile.genre || "Uncategorized"} · {formatAudioDuration(audioFile.duration)} · {audioFile.owner_name || "Station host"}</p>
+                    </div>
+                    <button type="button" onClick={() => addLibraryTrack(audioFile)} className="rounded-md bg-amber-300 px-3 py-2 text-sm font-semibold text-zinc-950 hover:bg-amber-200">
+                      Add
+                    </button>
                   </div>
-                  <div className="divide-y divide-white/10">
-                    {audioFiles.map((audioFile) => (
-                      <article key={audioFile.id} className="p-5">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="min-w-0">
-                            <p className="text-xs uppercase tracking-[0.2em] text-amber-300">{audioFile.visibility} {audioFile.genre && `- ${audioFile.genre}`}</p>
-                            <h3 className="mt-1 font-semibold">{audioFile.title || audioFile.name}</h3>
-                            <p className="text-sm text-zinc-400">
-                              {audioFile.artist || "Unknown Artist"} {audioFile.album && `- ${audioFile.album}`} {audioFile.duration ? `- ${audioFile.duration}s` : "- missing duration"}
-                            </p>
-                          </div>
-                          <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex">
-                            <button type="button" onClick={() => startAudioMetadataEdit(audioFile)} className="rounded-md border border-white/15 px-3 py-2 text-sm text-zinc-200 hover:border-amber-300">
-                              Edit
-                            </button>
-                            <button type="button" onClick={() => addLibraryTrack(audioFile)} className="rounded-md border border-white/15 px-3 py-2 text-sm text-zinc-200 hover:border-amber-300">
-                              Add to Lineup
-                            </button>
-                          </div>
-                        </div>
-                        {editingAudioId === audioFile.id && (
-                          <div className="mt-4 rounded-md border border-white/10 bg-zinc-950 p-4">
-                            <div className="grid gap-3 sm:grid-cols-2">
-                              {[
-                                ["title", "Title"],
-                                ["artist", "Artist"],
-                                ["album", "Album / Segment"],
-                                ["genre", "Genre"],
-                                ["length", "Duration in seconds"],
-                              ].map(([field, label]) => (
-                                <label key={field} className="block text-sm font-medium text-zinc-200" htmlFor={`audio-${audioFile.id}-${field}`}>
-                                  {label}
-                                  <input
-                                    id={`audio-${audioFile.id}-${field}`}
-                                    value={audioMetadataDrafts[audioFile.id]?.[field as keyof (DraftTrack & { genre: string })] || ""}
-                                    onChange={(event) => updateAudioMetadataDraft(audioFile.id, field as keyof (DraftTrack & { genre: string }), event.target.value)}
-                                    className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-white outline-none focus:border-amber-300"
-                                  />
-                                </label>
-                              ))}
-                              <label className="block text-sm font-medium text-zinc-200 sm:col-span-2" htmlFor={`audio-${audioFile.id}-notes`}>
-                                Notes
-                                <textarea
-                                  id={`audio-${audioFile.id}-notes`}
-                                  value={audioMetadataDrafts[audioFile.id]?.details || ""}
-                                  onChange={(event) => updateAudioMetadataDraft(audioFile.id, "details", event.target.value)}
-                                  rows={2}
-                                  className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-white outline-none focus:border-amber-300"
-                                />
-                              </label>
-                            </div>
-                            <div className="mt-3 flex gap-2">
-                              <button type="button" onClick={() => saveAudioMetadata(audioFile.id)} className="rounded-md bg-amber-300 px-3 py-2 text-sm font-semibold text-zinc-950 hover:bg-amber-200">
-                                Save Metadata
-                              </button>
-                              <button type="button" onClick={() => setEditingAudioId(null)} className="rounded-md border border-white/15 px-3 py-2 text-sm text-zinc-200 hover:border-amber-300">
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                        {audioFile.url && <audio controls src={audioFile.url} className="mt-4 w-full" />}
-                      </article>
-                    ))}
-                  </div>
-                </div>
+                  <details className="mt-3 rounded-md border border-white/10 bg-zinc-950 p-3">
+                    <summary className="cursor-pointer text-sm font-semibold text-amber-100">See more and listen</summary>
+                    {audioFile.notes && <p className="mt-3 text-sm text-zinc-300">{audioFile.notes}</p>}
+                    {audioFile.url && <audio controls preload="none" src={audioFile.url} className="mt-3 w-full" />}
+                  </details>
+                </article>
               ))}
             </div>
+            {filteredLibraryTracks.length > 8 && (
+              <div className="border-t border-white/10 p-4 text-center">
+                <Link href="/Library" className="text-sm font-semibold text-amber-200 hover:text-amber-100">See all {filteredLibraryTracks.length} matching library items</Link>
+              </div>
+            )}
           </section>
 
           <section className="rounded-md border border-white/10 bg-zinc-900">
@@ -922,7 +803,7 @@ const CreateShow = () => {
                             <p className="mt-1 text-zinc-200">{track.fileName || "No file attached"}</p>
                           </div>
                         </div>
-                        {track.audioFileId && (
+                        {track.audioFileId && libraryTracks.find((audioFile) => audioFile.id === track.audioFileId)?.owned_by_current_user && (
                           <button
                             type="button"
                             onClick={() => saveLineupTrackToLibrary(track)}

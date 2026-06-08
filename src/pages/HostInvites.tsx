@@ -80,6 +80,17 @@ const HostInvites = () => {
     }
   };
 
+  const copyInviteMessage = async (invitation: HostInvitationRecord) => {
+    const registrationUrl = `${window.location.origin}/Registration`;
+    const recipient = invitation.email ? `Hi,\n\n` : "";
+    const note = invitation.notes ? `\n\nShow idea / station note:\n${invitation.notes}` : "";
+    const expiration = invitation.expires_at ? `\n\nThis code expires ${formatStationDateTime(invitation.expires_at)}.` : "";
+    const message = `${recipient}You’re invited to host a show on Alpine Groove Guide.\n\nRegister here: ${registrationUrl}\nInvite code: ${invitation.code}${expiration}${note}`;
+
+    await navigator.clipboard.writeText(message);
+    setMessage(`Invite message copied for ${invitation.email || "your new host"}. Paste it into your email or text app.`);
+  };
+
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
       <Header title="Host Team" />
@@ -106,7 +117,10 @@ const HostInvites = () => {
             </section>
 
             <section className="mt-8 rounded-md border border-white/10 bg-zinc-900">
-              <div className="border-b border-white/10 p-5"><h2 className="text-xl font-semibold">Current Hosts</h2><p className="mt-1 text-sm text-zinc-400">Pausing access keeps every show and upload intact.</p></div>
+              <div className="border-b border-white/10 p-5">
+                <h2 className="text-xl font-semibold">Registered Host Accounts</h2>
+                <p className="mt-1 max-w-3xl text-sm text-zinc-400">These are people who previously registered in this development database. They are not pending invitations. Pausing access blocks sign-in while preserving their shows and uploads.</p>
+              </div>
               <div className="divide-y divide-white/10">
                 {hosts.length === 0 ? <p className="p-5 text-sm text-zinc-400">No hosts have joined yet.</p> : hosts.map((host) => (
                   <article key={host.id} className="grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
@@ -117,6 +131,7 @@ const HostInvites = () => {
                       </div>
                       <p className="mt-1 text-sm text-zinc-400">{host.email}</p>
                       <p className="mt-2 text-sm text-zinc-300">{host.shows_count} shows · {host.audio_count} audio uploads</p>
+                      <p className="mt-1 text-xs text-zinc-500">Registered {formatStationDateTime(host.joined_at)}</p>
                     </div>
                     <button type="button" disabled={busyId === host.id} onClick={() => updateHostStatus(host)} className="rounded-md border border-white/15 px-4 py-3 font-semibold hover:border-amber-300 disabled:opacity-50">
                       {host.account_status === "active" ? "Pause Access" : "Restore Access"}
@@ -128,7 +143,10 @@ const HostInvites = () => {
 
             <form onSubmit={createInvitation} className="mt-8 rounded-md border border-white/10 bg-zinc-900 p-5">
               <h2 className="text-xl font-semibold">Invite A New Host</h2>
-              <p className="mt-1 text-sm text-zinc-400">Email is recommended so the code only works for the right person.</p>
+              <div className="mt-2 rounded-md border border-amber-300/30 bg-amber-950/25 p-3 text-sm text-amber-100">
+                Creating an invite does not send an email. It creates a one-time code for you to copy into your own email or text message.
+              </div>
+              <p className="mt-3 text-sm text-zinc-400">Email is recommended so the code only works for the right person.</p>
               <div className="mt-5 grid gap-4 md:grid-cols-3">
                 <label className="text-sm font-medium text-zinc-200">Host Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="host@example.com" className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white" /></label>
                 <label className="text-sm font-medium text-zinc-200">Invite Expires ({STATION_TIME_LABEL})<input type="datetime-local" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white" /></label>
@@ -138,12 +156,21 @@ const HostInvites = () => {
             </form>
 
             <section className="mt-8 rounded-md border border-white/10 bg-zinc-900">
-              <div className="border-b border-white/10 p-5"><h2 className="text-xl font-semibold">Invitations</h2></div>
+              <div className="border-b border-white/10 p-5">
+                <h2 className="text-xl font-semibold">Invitation Codes</h2>
+                <p className="mt-1 text-sm text-zinc-400">Use “Copy Invite Message” to copy the registration link, code, expiration, and your note.</p>
+              </div>
               <div className="divide-y divide-white/10">
                 {invitations.map((invitation) => (
                   <article key={invitation.id} className="grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
                     <div><p className="font-mono text-xl font-semibold text-amber-200">{invitation.code}</p><p className="mt-1 text-sm text-zinc-400">{invitation.email || "Any email"} · {invitation.status}{invitation.expires_at ? ` · expires ${formatStationDateTime(invitation.expires_at)}` : ""}</p>{invitation.notes && <p className="mt-2 text-sm text-zinc-300">{invitation.notes}</p>}</div>
-                    {invitation.status === "active" && <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => navigator.clipboard.writeText(invitation.code)} className="min-h-11 rounded-md border border-white/15 px-3 py-2 text-sm font-semibold">Copy Code</button><button type="button" disabled={busyId === -invitation.id} onClick={() => revokeInvite(invitation)} className="min-h-11 rounded-md border border-red-400/30 px-3 py-2 text-sm font-semibold text-red-200">Revoke</button></div>}
+                    {invitation.status === "active" && (
+                      <div className="grid gap-2 sm:grid-cols-3">
+                        <button type="button" onClick={() => copyInviteMessage(invitation)} className="min-h-11 rounded-md bg-amber-300 px-3 py-2 text-sm font-semibold text-zinc-950 hover:bg-amber-200">Copy Invite Message</button>
+                        <button type="button" onClick={() => navigator.clipboard.writeText(invitation.code)} className="min-h-11 rounded-md border border-white/15 px-3 py-2 text-sm font-semibold">Copy Code Only</button>
+                        <button type="button" disabled={busyId === -invitation.id} onClick={() => revokeInvite(invitation)} className="min-h-11 rounded-md border border-red-400/30 px-3 py-2 text-sm font-semibold text-red-200">Revoke</button>
+                      </div>
+                    )}
                   </article>
                 ))}
               </div>

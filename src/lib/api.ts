@@ -117,6 +117,8 @@ export type AudioFileRecord = {
   visibility: "private" | "shared" | "pending_review";
   explicit?: boolean;
   notes?: string;
+  owner_name?: string;
+  owned_by_current_user?: boolean;
   created_at?: string;
 };
 
@@ -141,9 +143,9 @@ export type PlaylistRecord = {
   delivery_manifest?: StreamManifest;
   delivered_at?: string;
   full_show_audio_file?: {
-    id: number;
-    name: string;
-    url: string;
+    id?: number;
+    name?: string;
+    url?: string;
     duration?: number;
   } | null;
   songs: Array<{
@@ -197,6 +199,7 @@ export type StreamManifest = {
     scheduled_at?: string;
     status?: string;
     total_duration_seconds?: number;
+    package_mode?: "single_master" | "ordered_assets";
   };
   assets?: Array<{
     position?: number;
@@ -215,7 +218,11 @@ export type StreamManifest = {
     title?: string;
     artist?: string;
     duration_seconds?: number;
+    start_offset_seconds?: number;
+    end_offset_seconds?: number;
     audio_url?: string;
+    audio_file_id?: number;
+    s3_key?: string;
   }>;
 };
 

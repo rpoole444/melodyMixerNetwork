@@ -89,9 +89,12 @@ export default function Home() {
                   Keep your host profile current, stage new shows, and move approved programming toward a 24/7 Alpine Groove Guide stream.
                 </p>
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Link href="/CreateShow" className="rounded-md bg-amber-300 px-4 py-3 font-semibold text-zinc-950 hover:bg-amber-200">
                   Create Show
+                </Link>
+                <Link href="/Library" className="rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-amber-300">
+                  Library
                 </Link>
                 <Link href="/UserProfile" className="rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-amber-300">
                   Profile

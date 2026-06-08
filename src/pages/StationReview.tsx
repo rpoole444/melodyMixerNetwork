@@ -1,6 +1,8 @@
 import Header from "@/components/Header";
+import ShowSequencePlayer from "@/components/ShowSequencePlayer";
 import { useUser } from "@/contexts/UserContext";
 import { api, PlaylistRecord } from "@/lib/api";
+import { buildShowPlayout } from "@/lib/showPlayout";
 import { formatStationDateTime, stationInputToIso, STATION_TIME_LABEL } from "@/lib/stationTime";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -28,6 +30,13 @@ const formatDuration = (seconds = 0) => {
   const minutes = Math.round((seconds % 3600) / 60);
   if (hours === 0) return `${minutes} min`;
   return `${hours} hr ${minutes} min`;
+};
+
+const formatTrackDuration = (seconds = 0) => {
+  if (seconds <= 0) return "Missing duration";
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
 };
 
 const showDurationSeconds = (show: PlaylistRecord) => show.songs.reduce((total, song) => total + (song.duration || 0), 0);
@@ -406,23 +415,36 @@ const StationReview = () => {
                     </span>
                     {show.confirmations_recorded_at && <span className="rounded-full bg-amber-300/15 px-2 py-1 text-amber-100">Host confirmations recorded</span>}
                   </div>
-                  <div className="mt-3 divide-y divide-white/10 rounded-md border border-white/10">
+                  <ShowSequencePlayer items={buildShowPlayout(show)} />
+                  <div className="mt-4 grid gap-3">
                     {show.songs.length === 0 ? (
-                      <p className="p-4 text-sm text-zinc-400">No lineup items. This may be a full-show upload.</p>
+                      <p className="rounded-md border border-white/10 bg-zinc-950 p-4 text-sm text-zinc-400">No lineup items. This may be a full-show upload.</p>
                     ) : (
-                      show.songs.map((song) => (
-                        <div key={song.id} className="grid grid-cols-[48px_1fr_auto] items-center gap-3 p-4">
-                          <span className="text-sm text-zinc-500">#{song.position}</span>
-                          <div>
-                            <p className="font-medium">{song.name}</p>
-                            <p className="text-sm text-zinc-400">{song.artist} - {song.album}</p>
+                      show.songs.map((song) => {
+                        const audioUrl = song.audio_file?.url || song.file_url;
+                        return (
+                        <article key={song.id} className="rounded-md border border-white/10 bg-zinc-950 p-4">
+                          <div className="grid grid-cols-[42px_1fr_auto] items-start gap-3">
+                            <span className="font-mono text-sm text-zinc-500">#{song.position}</span>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-white">{song.name}</p>
+                              <p className="mt-1 text-sm text-zinc-400">{song.artist} · {song.album}</p>
+                              {song.file_name && <p className="mt-1 truncate text-xs text-zinc-600">{song.file_name}</p>}
+                            </div>
+                            <div className="text-right">
+                              <p className={`font-mono text-sm ${song.duration > 0 ? "text-amber-200" : "text-red-200"}`}>{formatTrackDuration(song.duration)}</p>
+                              {!audioUrl && <p className="mt-1 text-xs text-red-200">Missing audio</p>}
+                            </div>
                           </div>
-                          <div className="text-right text-sm">
-                            <p className={song.duration > 0 ? "text-zinc-500" : "text-red-200"}>{song.duration > 0 ? `${song.duration}s` : "Missing duration"}</p>
-                            {!song.file_url && !song.audio_file?.url && <p className="mt-1 text-red-200">Missing audio</p>}
-                          </div>
-                        </div>
-                      ))
+                          {audioUrl && (
+                            <details className="mt-3 rounded-md border border-white/10 bg-zinc-900 p-3">
+                              <summary className="cursor-pointer text-sm font-semibold text-amber-100">Listen to this item</summary>
+                              <audio controls preload="none" src={audioUrl} className="mt-3 w-full" />
+                            </details>
+                          )}
+                        </article>
+                        );
+                      })
                     )}
                   </div>
                 </div>
