@@ -228,11 +228,33 @@ export type StreamManifest = {
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api/v1";
 
+const AUTH_TOKEN_KEY = "melody_mixer_auth_token";
+
+const getAuthToken = () => (typeof window === "undefined" ? null : window.localStorage.getItem(AUTH_TOKEN_KEY));
+
+const setAuthToken = (token?: string) => {
+  if (typeof window === "undefined") return;
+  if (token) {
+    window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+  } else {
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
+  }
+};
+
+const authFetch = (input: RequestInfo | URL, init: RequestInit = {}) => {
+  const headers = new Headers(init.headers);
+  const token = getAuthToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  return fetch(input, { ...init, headers });
+};
+
 const xhrRequest = <T>(url: string, method: string, body: FormData, onProgress?: (percent: number) => void) =>
   new Promise<T>((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open(method, url);
     request.withCredentials = true;
+    const token = getAuthToken();
+    if (token) request.setRequestHeader("Authorization", `Bearer ${token}`);
     request.responseType = "json";
     request.upload.onprogress = (event) => {
       if (event.lengthComputable) onProgress?.(Math.round((event.loaded / event.total) * 100));
@@ -312,18 +334,20 @@ const buildShowFormData = (show: ShowInput) => {
 
 export const api = {
   async login(email: string, password: string): Promise<ApiUser> {
-    const response = await fetch(`${API_BASE_URL}/sessions`, {
+    const response = await authFetch(`${API_BASE_URL}/sessions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ session: { email, password } }),
       credentials: "include",
     });
 
-    return normalizeUser(await handleResponse(response));
+    const payload = await handleResponse(response);
+    setAuthToken(payload.token);
+    return normalizeUser(payload);
   },
 
   async currentUser(): Promise<ApiUser | null> {
-    const response = await fetch(`${API_BASE_URL}/sessions/current`, {
+    const response = await authFetch(`${API_BASE_URL}/sessions/current`, {
       credentials: "include",
     });
 
@@ -333,14 +357,15 @@ export const api = {
   },
 
   async logout() {
-    await fetch(`${API_BASE_URL}/sessions`, {
+    await authFetch(`${API_BASE_URL}/sessions`, {
       method: "DELETE",
       credentials: "include",
     }).catch(() => undefined);
+    setAuthToken();
   },
 
   async register(user: RegistrationInput): Promise<ApiUser> {
-    const response = await fetch(`${API_BASE_URL}/users`, {
+    const response = await authFetch(`${API_BASE_URL}/users`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -359,11 +384,13 @@ export const api = {
       credentials: "include",
     });
 
-    return normalizeUser(await handleResponse(response));
+    const payload = await handleResponse(response);
+    setAuthToken(payload.token);
+    return normalizeUser(payload);
   },
 
   async listHostInvitations(): Promise<HostInvitationRecord[]> {
-    const response = await fetch(`${API_BASE_URL}/host_invitations`, {
+    const response = await authFetch(`${API_BASE_URL}/host_invitations`, {
       credentials: "include",
     });
 
@@ -371,7 +398,7 @@ export const api = {
   },
 
   async createHostInvitation(input: HostInvitationInput): Promise<HostInvitationRecord> {
-    const response = await fetch(`${API_BASE_URL}/host_invitations`, {
+    const response = await authFetch(`${API_BASE_URL}/host_invitations`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -388,7 +415,7 @@ export const api = {
   },
 
   async revokeHostInvitation(id: number): Promise<HostInvitationRecord> {
-    const response = await fetch(`${API_BASE_URL}/host_invitations/${id}/revoke`, {
+    const response = await authFetch(`${API_BASE_URL}/host_invitations/${id}/revoke`, {
       method: "PATCH",
       credentials: "include",
     });
@@ -396,13 +423,13 @@ export const api = {
   },
 
   async listStationHosts(): Promise<StationHostRecord[]> {
-    const response = await fetch(`${API_BASE_URL}/station_hosts`, { credentials: "include" });
+    const response = await authFetch(`${API_BASE_URL}/station_hosts`, { credentials: "include" });
     return handleResponse(response);
   },
 
   async setHostStatus(id: number, status: "active" | "suspended"): Promise<StationHostRecord> {
     const action = status === "active" ? "reactivate" : "suspend";
-    const response = await fetch(`${API_BASE_URL}/station_hosts/${id}/${action}`, {
+    const response = await authFetch(`${API_BASE_URL}/station_hosts/${id}/${action}`, {
       method: "PATCH",
       credentials: "include",
     });
@@ -412,7 +439,7 @@ export const api = {
   async updateUser(user: ApiUser): Promise<ApiUser> {
     if (!user.id) return user;
 
-    const response = await fetch(`${API_BASE_URL}/users/${user.id}`, {
+    const response = await authFetch(`${API_BASE_URL}/users/${user.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -433,7 +460,7 @@ export const api = {
 
   async listAudioFiles(scope?: "mine"): Promise<AudioFileRecord[]> {
     const query = scope ? `?scope=${scope}` : "";
-    const response = await fetch(`${API_BASE_URL}/audio_files${query}`, {
+    const response = await authFetch(`${API_BASE_URL}/audio_files${query}`, {
       credentials: "include",
     });
 
@@ -457,7 +484,7 @@ export const api = {
   },
 
   async updateAudioFileMetadata(id: number, input: AudioFileMetadataInput): Promise<AudioFileRecord> {
-    const response = await fetch(`${API_BASE_URL}/audio_files/${id}`, {
+    const response = await authFetch(`${API_BASE_URL}/audio_files/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ audio_file: input }),
@@ -472,7 +499,7 @@ export const api = {
   },
 
   async getShow(id: number): Promise<PlaylistRecord> {
-    const response = await fetch(`${API_BASE_URL}/playlists/${id}`, {
+    const response = await authFetch(`${API_BASE_URL}/playlists/${id}`, {
       credentials: "include",
     });
 
@@ -484,7 +511,7 @@ export const api = {
   },
 
   async requestPasswordReset(email: string): Promise<string> {
-    const response = await fetch(`${API_BASE_URL}/password_resets`, {
+    const response = await authFetch(`${API_BASE_URL}/password_resets`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -494,7 +521,7 @@ export const api = {
   },
 
   async resetPassword(token: string, email: string, password: string, passwordConfirmation: string): Promise<string> {
-    const response = await fetch(`${API_BASE_URL}/password_resets/${token}`, {
+    const response = await authFetch(`${API_BASE_URL}/password_resets/${token}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, password_confirmation: passwordConfirmation }),
@@ -504,7 +531,7 @@ export const api = {
   },
 
   async listStationShows(): Promise<PlaylistRecord[]> {
-    const response = await fetch(`${API_BASE_URL}/playlists?scope=station`, {
+    const response = await authFetch(`${API_BASE_URL}/playlists?scope=station`, {
       credentials: "include",
     });
 
@@ -512,13 +539,13 @@ export const api = {
   },
 
   async listPublicSchedule(): Promise<PlaylistRecord[]> {
-    const response = await fetch(`${API_BASE_URL}/station/schedule`);
+    const response = await authFetch(`${API_BASE_URL}/station/schedule`);
 
     return handleResponse(response);
   },
 
   async listMyShows(): Promise<PlaylistRecord[]> {
-    const response = await fetch(`${API_BASE_URL}/playlists`, {
+    const response = await authFetch(`${API_BASE_URL}/playlists`, {
       credentials: "include",
     });
 
@@ -526,7 +553,7 @@ export const api = {
   },
 
   async markShowReady(id: number): Promise<PlaylistRecord> {
-    const response = await fetch(`${API_BASE_URL}/playlists/${id}/mark_ready`, {
+    const response = await authFetch(`${API_BASE_URL}/playlists/${id}/mark_ready`, {
       method: "PATCH",
       credentials: "include",
     });
@@ -535,7 +562,7 @@ export const api = {
   },
 
   async requestShowChanges(id: number, reviewNotes: string): Promise<PlaylistRecord> {
-    const response = await fetch(`${API_BASE_URL}/playlists/${id}/request_changes`, {
+    const response = await authFetch(`${API_BASE_URL}/playlists/${id}/request_changes`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ review: { review_notes: reviewNotes } }),
@@ -546,7 +573,7 @@ export const api = {
   },
 
   async reopenShowForEdits(id: number, reviewNotes: string): Promise<PlaylistRecord> {
-    const response = await fetch(`${API_BASE_URL}/playlists/${id}/reopen_for_edits`, {
+    const response = await authFetch(`${API_BASE_URL}/playlists/${id}/reopen_for_edits`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ review: { review_notes: reviewNotes } }),
@@ -557,7 +584,7 @@ export const api = {
   },
 
   async rejectShow(id: number, reviewNotes: string): Promise<PlaylistRecord> {
-    const response = await fetch(`${API_BASE_URL}/playlists/${id}/reject`, {
+    const response = await authFetch(`${API_BASE_URL}/playlists/${id}/reject`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ review: { review_notes: reviewNotes } }),
@@ -568,7 +595,7 @@ export const api = {
   },
 
   async scheduleShow(id: number, scheduledAt: string): Promise<PlaylistRecord> {
-    const response = await fetch(`${API_BASE_URL}/playlists/${id}/schedule`, {
+    const response = await authFetch(`${API_BASE_URL}/playlists/${id}/schedule`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ playlist: { scheduled_at: scheduledAt } }),
@@ -579,7 +606,7 @@ export const api = {
   },
 
   async deliverShow(id: number, target: string): Promise<PlaylistRecord> {
-    const response = await fetch(`${API_BASE_URL}/playlists/${id}/deliver`, {
+    const response = await authFetch(`${API_BASE_URL}/playlists/${id}/deliver`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ delivery: { target } }),
