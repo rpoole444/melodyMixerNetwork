@@ -142,6 +142,17 @@ export type PlaylistRecord = {
   delivery_reference?: string;
   delivery_manifest?: StreamManifest;
   delivered_at?: string;
+  render_status?: "not_rendered" | "rendering" | "ready" | "failed";
+  render_error?: string;
+  rendered_at?: string;
+  rendered_master_audio_file?: {
+    id: number;
+    name: string;
+    url: string;
+    duration?: number;
+    content_type?: string;
+    size?: number;
+  } | null;
   full_show_audio_file?: {
     id?: number;
     name?: string;
@@ -624,6 +635,15 @@ export const api = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ delivery: { target } }),
+      credentials: "include",
+    });
+
+    return handleResponse(response);
+  },
+
+  async renderBroadcastMaster(id: number): Promise<PlaylistRecord> {
+    const response = await authFetch(`${API_BASE_URL}/playlists/${id}/render_master`, {
+      method: "POST",
       credentials: "include",
     });
 

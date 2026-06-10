@@ -211,6 +211,25 @@ const StationReview = () => {
     }
   };
 
+  const renderBroadcastMaster = async (show: PlaylistRecord) => {
+    const issues = showReadinessIssues(show);
+    if (issues.length > 0) {
+      setMessage(`Resolve show readiness issues before rendering: ${issues.join(" ")}`);
+      return;
+    }
+
+    setBusyId(show.id);
+    try {
+      const nextShow = await api.renderBroadcastMaster(show.id);
+      updateShow(nextShow);
+      setMessage(`${show.name} is rendering in the background. Refresh shortly to hear the finished broadcast master.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not start broadcast master rendering.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-ink text-white">
       <Header title="Station Review" />
@@ -356,6 +375,14 @@ const StationReview = () => {
                   </button>
                   <button
                     type="button"
+                    onClick={() => renderBroadcastMaster(show)}
+                    disabled={busyId === show.id || !["ready", "scheduled"].includes(show.status) || show.render_status === "rendering" || showReadinessIssues(show).length > 0}
+                    className="rounded-xl bg-cobalt px-4 py-3 font-semibold text-white hover:bg-cobalt/80 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {show.render_status === "rendering" ? "Rendering Master..." : show.render_status === "ready" ? "Rebuild Broadcast Master" : "Build Broadcast Master"}
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => deliverShow(show)}
                     disabled={busyId === show.id || show.status !== "scheduled" || showReadinessIssues(show).length > 0}
                     className="rounded-xl border border-white/15 px-4 py-3 font-semibold text-white hover:border-signal disabled:cursor-not-allowed disabled:opacity-50"
@@ -364,6 +391,37 @@ const StationReview = () => {
                   </button>
                 </div>
               </div>
+
+              {(show.render_status && show.render_status !== "not_rendered") && (
+                <section className="border-b border-white/10 p-5">
+                  <div className="rounded-xl border border-cobalt/40 bg-cobalt/10 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.25em] text-blue-200">
+                      Broadcast Master: {show.render_status.replace("_", " ")}
+                    </p>
+                    {show.render_status === "rendering" && (
+                      <p className="mt-2 text-sm text-paper/70">Tracks and host breaks are being joined, normalized to broadcast loudness, and encoded as one MP3.</p>
+                    )}
+                    {show.render_status === "failed" && (
+                      <p className="mt-2 text-sm text-red-200">{show.render_error || "Rendering failed. Try rebuilding the master."}</p>
+                    )}
+                    {show.render_status === "ready" && show.rendered_master_audio_file?.url && (
+                      <div className="mt-3">
+                        <audio controls preload="metadata" className="w-full" src={show.rendered_master_audio_file.url}>
+                          Your browser does not support audio playback.
+                        </audio>
+                        <a
+                          href={show.rendered_master_audio_file.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-3 inline-block text-sm font-semibold text-blue-200 underline underline-offset-4"
+                        >
+                          Open Broadcast Master
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
 
               {show.delivery_manifest?.reference && (
                 <section className="border-b border-white/10 p-5">
