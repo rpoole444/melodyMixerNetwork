@@ -1,6 +1,6 @@
-# Melody Mixer Network
+# Human Frequency
 
-Melody Mixer Network offers a unique platform for radio show hosts to curate engaging music shows with rich vocal interludes. Once a show is curated and approved, it streams on a community internet radio station and is featured on the Alpine Groove Guide, a local events calendar for the Colorado Springs community.
+Human Frequency is a human-made radio platform for musicians, selectors, bandleaders, and music lovers to curate shows with music and spoken interludes. It is presented by Alpine Groove Guide, its streaming home and a guide to what is happening around the city.
 
 ## Table of Contents
   - [Setup](#setup)
@@ -46,7 +46,7 @@ After Creating [Alpine Groove Guide ](https://github.com/rpoole444/cos-livewire-
 
 ## Abstract 
 
-Melody Mixer Network allows radio show hosts to seamlessly create personalized profiles and radio shows by mixing tracks and recording vocal segments. The interface supports direct MP3 uploads and live voice recordings. Once the shows are curated and approved, they are continuously streamed on our Alpine Groove Guide, providing a constant mix of music and talk for the Colorado Springs local community.
+Human Frequency lets hosts create profiles and radio shows by mixing tracks and recording vocal segments. The interface supports direct audio uploads and live voice recordings. Approved programming is prepared for streaming through Alpine Groove Guide.
 
 ## Learning Goals
 
@@ -94,4 +94,3 @@ Backend Engineer - Nathan Lambertson;
  width="150" height="auto" /></td>
 
 </table>
-

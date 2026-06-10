@@ -212,15 +212,15 @@ const StationReview = () => {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white">
+    <main className="min-h-screen bg-ink text-white">
       <Header title="Station Review" />
 
       <section className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
         {user?.role !== "admin" ? (
-          <div className="rounded-md border border-amber-300/40 bg-amber-950/30 p-6">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-amber-300">Admin Area</p>
+          <div className="rounded-xl border border-signal/40 bg-signal/30 p-6">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-signal">Admin Area</p>
             <h1 className="mt-3 text-3xl font-semibold">Station Review is for admins only.</h1>
-            <p className="mt-3 max-w-2xl text-zinc-300">
+            <p className="mt-3 max-w-2xl text-paper/70">
               Hosts can create and submit shows. Admins review submitted shows, schedule airtime, and queue shows for streaming.
             </p>
           </div>
@@ -228,28 +228,29 @@ const StationReview = () => {
         <>
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-amber-300">Station Queue</p>
-            <h1 className="mt-3 text-4xl font-semibold">Review, schedule, and queue local shows.</h1>
-            <p className="mt-3 max-w-3xl text-zinc-300">
+            <p className="hf-kicker">Station queue</p>
+            <h1 className="mt-3 text-5xl">Shape what Human Frequency sends out.</h1>
+            <p className="mt-3 max-w-2xl text-paper/60">Listen closely, leave useful notes, and move finished shows onto the schedule.</p>
+            <p className="mt-3 max-w-3xl text-paper/70">
               Artists submit shows from the show builder. Station operators review the lineup, mark the show ready, schedule an air time, and queue it for a streaming target.
             </p>
           </div>
-          <button type="button" onClick={loadShows} className="w-fit rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-amber-300">
+          <button type="button" onClick={loadShows} className="w-fit rounded-xl border border-white/15 px-4 py-3 font-semibold text-white hover:border-signal">
             Refresh Queue
           </button>
-          <Link href="/ProgrammingClock" className="w-fit rounded-md bg-amber-300 px-4 py-3 font-semibold text-zinc-950 hover:bg-amber-200">
+          <Link href="/ProgrammingClock" className="w-fit rounded-xl bg-signal px-4 py-3 font-semibold text-ink hover:bg-[#ff7658]">
             Programming Clock
           </Link>
         </div>
 
-        <section className="mt-8 grid gap-4 rounded-md border border-white/10 bg-zinc-900 p-5 md:grid-cols-2">
-          <label className="block text-sm font-medium text-zinc-200" htmlFor="statusFilter">
+        <section className="mt-8 grid gap-4 rounded-xl border border-white/10 bg-ink-soft p-5 md:grid-cols-2">
+          <label className="block text-sm font-medium text-paper/80" htmlFor="statusFilter">
             Filter Queue
             <select
               id="statusFilter"
               value={selectedStatus}
               onChange={(event) => setSelectedStatus(event.target.value)}
-              className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300"
+              className="mt-2 w-full rounded-xl border border-paper/15 bg-ink px-3 py-3 text-white outline-none focus:border-signal"
             >
               <option value="all">All station shows</option>
               <option value="submitted">Submitted</option>
@@ -261,13 +262,13 @@ const StationReview = () => {
             </select>
           </label>
 
-          <label className="block text-sm font-medium text-zinc-200" htmlFor="streamTarget">
+          <label className="block text-sm font-medium text-paper/80" htmlFor="streamTarget">
             Stream Target
             <select
               id="streamTarget"
               value={streamTarget}
               onChange={(event) => setStreamTarget(event.target.value)}
-              className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300"
+              className="mt-2 w-full rounded-xl border border-paper/15 bg-ink px-3 py-3 text-white outline-none focus:border-signal"
             >
               {streamTargets.map((target) => (
                 <option key={target.value} value={target.value}>{target.label}</option>
@@ -276,33 +277,33 @@ const StationReview = () => {
           </label>
         </section>
 
-        {message && <p className="mt-6 rounded-md border border-amber-300/40 bg-amber-950/40 p-3 text-sm text-amber-100">{message}</p>}
+        {message && <p className="mt-6 rounded-xl border border-signal/40 bg-signal/10 p-3 text-sm text-[#ffd5c9]">{message}</p>}
 
         <section className="mt-6 grid gap-5">
           {filteredShows.length === 0 && !message && (
-            <p className="rounded-md border border-white/10 bg-zinc-900 p-5 text-zinc-400">No shows are in this queue yet.</p>
+            <p className="rounded-xl border border-white/10 bg-ink-soft p-5 text-paper/50">No shows are in this queue yet.</p>
           )}
 
           {filteredShows.map((show) => (
-            <article key={show.id} className="rounded-md border border-white/10 bg-zinc-900">
+            <article key={show.id} className="rounded-xl border border-white/10 bg-ink-soft">
               <div className="grid gap-5 border-b border-white/10 p-5 lg:grid-cols-[1fr_auto]">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">{statusLabels[show.status]} - {show.delivery_status}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-signal">{statusLabels[show.status]} - {show.delivery_status}</p>
                   <h2 className="mt-2 text-2xl font-semibold">{show.name}</h2>
-                  <p className="mt-2 text-zinc-300">{show.description}</p>
-                  <p className="mt-2 text-sm text-zinc-400">Host: {show.host_name}</p>
+                  <p className="mt-2 text-paper/70">{show.description}</p>
+                  <p className="mt-2 text-sm text-paper/50">Host: {show.host_name}</p>
                   {show.review_notes && (
-                    <p className="mt-3 rounded-md border border-amber-300/30 bg-amber-950/30 px-3 py-2 text-sm text-amber-100">
+                    <p className="mt-3 rounded-xl border border-signal/30 bg-signal/30 px-3 py-2 text-sm text-[#ffd5c9]">
                       Review note: {show.review_notes}
                     </p>
                   )}
                   {show.delivery_reference && (
-                    <p className="mt-3 rounded-md border border-emerald-400/30 bg-emerald-950/30 px-3 py-2 text-sm text-emerald-100">
+                    <p className="mt-3 rounded-xl border border-emerald-400/30 bg-emerald-950/30 px-3 py-2 text-sm text-emerald-100">
                       Stream package: {show.delivery_reference}
                     </p>
                   )}
                   {showReadinessIssues(show).length > 0 && (
-                    <div className="mt-3 rounded-md border border-red-300/30 bg-red-950/30 px-3 py-2 text-sm text-red-100">
+                    <div className="mt-3 rounded-xl border border-red-300/30 bg-red-950/30 px-3 py-2 text-sm text-red-100">
                       <p className="font-semibold">Not ready to schedule or stream yet.</p>
                       <ul className="mt-1 list-disc pl-5">
                         {showReadinessIssues(show).map((issue) => (
@@ -317,7 +318,7 @@ const StationReview = () => {
                     type="button"
                     onClick={() => markReady(show)}
                     disabled={busyId === show.id || show.status !== "submitted" || showReadinessIssues(show).length > 0}
-                    className="rounded-md bg-amber-300 px-4 py-3 font-semibold text-zinc-950 hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl bg-signal px-4 py-3 font-semibold text-ink hover:bg-[#ff7658] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Mark Ready
                   </button>
@@ -325,7 +326,7 @@ const StationReview = () => {
                     type="button"
                     onClick={() => requestChanges(show)}
                     disabled={busyId === show.id || show.status !== "submitted"}
-                    className="rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-amber-300 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl border border-white/15 px-4 py-3 font-semibold text-white hover:border-signal disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Needs Edits
                   </button>
@@ -333,7 +334,7 @@ const StationReview = () => {
                     type="button"
                     onClick={() => reopenForEdits(show)}
                     disabled={busyId === show.id || !(["ready", "scheduled", "aired"].includes(show.status) || show.delivery_status === "queued")}
-                    className="rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-amber-300 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl border border-white/15 px-4 py-3 font-semibold text-white hover:border-signal disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Reopen for Edits
                   </button>
@@ -341,7 +342,7 @@ const StationReview = () => {
                     type="button"
                     onClick={() => rejectShow(show)}
                     disabled={busyId === show.id || show.status !== "submitted"}
-                    className="rounded-md border border-red-300/40 px-4 py-3 font-semibold text-red-100 hover:border-red-300 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl border border-red-300/40 px-4 py-3 font-semibold text-red-100 hover:border-red-300 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Reject
                   </button>
@@ -349,7 +350,7 @@ const StationReview = () => {
                     type="button"
                     onClick={() => scheduleShow(show)}
                     disabled={busyId === show.id || !["ready", "scheduled"].includes(show.status) || showReadinessIssues(show).length > 0}
-                    className="rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-amber-300 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl border border-white/15 px-4 py-3 font-semibold text-white hover:border-signal disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Schedule
                   </button>
@@ -357,7 +358,7 @@ const StationReview = () => {
                     type="button"
                     onClick={() => deliverShow(show)}
                     disabled={busyId === show.id || show.status !== "scheduled" || showReadinessIssues(show).length > 0}
-                    className="rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-amber-300 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl border border-white/15 px-4 py-3 font-semibold text-white hover:border-signal disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Queue Stream Package
                   </button>
@@ -367,38 +368,38 @@ const StationReview = () => {
               {show.delivery_manifest?.reference && (
                 <section className="border-b border-white/10 p-5">
                   <div className="grid gap-4 md:grid-cols-3">
-                    <div className="rounded-md border border-white/10 bg-zinc-950 p-4">
-                      <p className="text-sm text-zinc-400">Target</p>
+                    <div className="rounded-xl border border-white/10 bg-ink p-4">
+                      <p className="text-sm text-paper/50">Target</p>
                       <p className="mt-1 font-semibold">{show.delivery_manifest.target}</p>
                     </div>
-                    <div className="rounded-md border border-white/10 bg-zinc-950 p-4">
-                      <p className="text-sm text-zinc-400">Assets</p>
+                    <div className="rounded-xl border border-white/10 bg-ink p-4">
+                      <p className="text-sm text-paper/50">Assets</p>
                       <p className="mt-1 font-semibold">{show.delivery_manifest.assets?.length || 0}</p>
                     </div>
-                    <div className="rounded-md border border-white/10 bg-zinc-950 p-4">
-                      <p className="text-sm text-zinc-400">Duration</p>
+                    <div className="rounded-xl border border-white/10 bg-ink p-4">
+                      <p className="text-sm text-paper/50">Duration</p>
                       <p className="mt-1 font-semibold">{formatDuration(show.delivery_manifest.show?.total_duration_seconds || 0)}</p>
                     </div>
                   </div>
                   {show.delivery_manifest.provider?.name && (
                     <div className="mt-4 grid gap-4 md:grid-cols-3">
-                      <div className="rounded-md border border-white/10 bg-zinc-950 p-4">
-                        <p className="text-sm text-zinc-400">Provider</p>
+                      <div className="rounded-xl border border-white/10 bg-ink p-4">
+                        <p className="text-sm text-paper/50">Provider</p>
                         <p className="mt-1 font-semibold">{show.delivery_manifest.provider.name}</p>
                       </div>
-                      <div className="rounded-md border border-white/10 bg-zinc-950 p-4">
-                        <p className="text-sm text-zinc-400">Handoff Mode</p>
+                      <div className="rounded-xl border border-white/10 bg-ink p-4">
+                        <p className="text-sm text-paper/50">Handoff Mode</p>
                         <p className="mt-1 font-semibold">{show.delivery_manifest.provider.mode?.replace("_", " ")}</p>
                       </div>
-                      <div className="rounded-md border border-white/10 bg-zinc-950 p-4">
-                        <p className="text-sm text-zinc-400">AzuraCast Playlist</p>
+                      <div className="rounded-xl border border-white/10 bg-ink p-4">
+                        <p className="text-sm text-paper/50">AzuraCast Playlist</p>
                         <p className="mt-1 font-semibold">{show.delivery_manifest.provider.recommended_playlist || "Not set"}</p>
                       </div>
                     </div>
                   )}
-                  <details className="mt-4 rounded-md border border-white/10 bg-zinc-950 p-4">
+                  <details className="mt-4 rounded-xl border border-white/10 bg-ink p-4">
                     <summary className="cursor-pointer font-semibold">Stream Export Manifest</summary>
-                    <pre className="mt-4 max-h-72 overflow-auto text-xs text-zinc-300">
+                    <pre className="mt-4 max-h-72 overflow-auto text-xs text-paper/70">
                       {JSON.stringify(show.delivery_manifest, null, 2)}
                     </pre>
                   </details>
@@ -408,37 +409,37 @@ const StationReview = () => {
               <div className="grid gap-5 p-5 lg:grid-cols-[1fr_0.8fr]">
                 <div>
                   <h3 className="text-lg font-semibold">Show Lineup</h3>
-                  <p className="mt-1 text-sm text-zinc-400">Estimated length: {formatDuration(showDurationSeconds(show))}</p>
+                  <p className="mt-1 text-sm text-paper/50">Estimated length: {formatDuration(showDurationSeconds(show))}</p>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">
                     <span className={`rounded-full px-2 py-1 ${show.contains_explicit_content ? "bg-red-400/15 text-red-200" : "bg-emerald-400/15 text-emerald-200"}`}>
                       {show.contains_explicit_content ? "Explicit content" : "No explicit content reported"}
                     </span>
-                    {show.confirmations_recorded_at && <span className="rounded-full bg-amber-300/15 px-2 py-1 text-amber-100">Host confirmations recorded</span>}
+                    {show.confirmations_recorded_at && <span className="rounded-full bg-signal/15 px-2 py-1 text-[#ffd5c9]">Host confirmations recorded</span>}
                   </div>
                   <ShowSequencePlayer items={buildShowPlayout(show)} />
                   <div className="mt-4 grid gap-3">
                     {show.songs.length === 0 ? (
-                      <p className="rounded-md border border-white/10 bg-zinc-950 p-4 text-sm text-zinc-400">No lineup items. This may be a full-show upload.</p>
+                      <p className="rounded-xl border border-white/10 bg-ink p-4 text-sm text-paper/50">No lineup items. This may be a full-show upload.</p>
                     ) : (
                       show.songs.map((song) => {
                         const audioUrl = song.audio_file?.url || song.file_url;
                         return (
-                        <article key={song.id} className="rounded-md border border-white/10 bg-zinc-950 p-4">
+                        <article key={song.id} className="rounded-xl border border-white/10 bg-ink p-4">
                           <div className="grid grid-cols-[42px_1fr_auto] items-start gap-3">
-                            <span className="font-mono text-sm text-zinc-500">#{song.position}</span>
+                            <span className="font-mono text-sm text-paper/35">#{song.position}</span>
                             <div className="min-w-0">
                               <p className="font-semibold text-white">{song.name}</p>
-                              <p className="mt-1 text-sm text-zinc-400">{song.artist} · {song.album}</p>
-                              {song.file_name && <p className="mt-1 truncate text-xs text-zinc-600">{song.file_name}</p>}
+                              <p className="mt-1 text-sm text-paper/50">{song.artist} · {song.album}</p>
+                              {song.file_name && <p className="mt-1 truncate text-xs text-paper/45">{song.file_name}</p>}
                             </div>
                             <div className="text-right">
-                              <p className={`font-mono text-sm ${song.duration > 0 ? "text-amber-200" : "text-red-200"}`}>{formatTrackDuration(song.duration)}</p>
+                              <p className={`font-mono text-sm ${song.duration > 0 ? "text-[#ff9a82]" : "text-red-200"}`}>{formatTrackDuration(song.duration)}</p>
                               {!audioUrl && <p className="mt-1 text-xs text-red-200">Missing audio</p>}
                             </div>
                           </div>
                           {audioUrl && (
-                            <details className="mt-3 rounded-md border border-white/10 bg-zinc-900 p-3">
-                              <summary className="cursor-pointer text-sm font-semibold text-amber-100">Listen to this item</summary>
+                            <details className="mt-3 rounded-xl border border-white/10 bg-ink-soft p-3">
+                              <summary className="cursor-pointer text-sm font-semibold text-[#ffd5c9]">Listen to this item</summary>
                               <audio controls preload="none" src={audioUrl} className="mt-3 w-full" />
                             </details>
                           )}
@@ -450,7 +451,7 @@ const StationReview = () => {
                 </div>
 
                 <div>
-                  <label className="mb-5 block text-sm font-medium text-zinc-200" htmlFor={`review-${show.id}`}>
+                  <label className="mb-5 block text-sm font-medium text-paper/80" htmlFor={`review-${show.id}`}>
                     Admin Review Notes
                     <textarea
                       id={`review-${show.id}`}
@@ -458,28 +459,28 @@ const StationReview = () => {
                       onChange={(event) => setReviewNotesById((current) => ({ ...current, [show.id]: event.target.value }))}
                       rows={4}
                       placeholder="Notes for the host if this needs edits or is rejected."
-                      className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300"
+                      className="mt-2 w-full rounded-xl border border-paper/15 bg-ink px-3 py-3 text-white outline-none focus:border-signal"
                     />
                   </label>
-                  <label className="block text-sm font-medium text-zinc-200" htmlFor={`schedule-${show.id}`}>
+                  <label className="block text-sm font-medium text-paper/80" htmlFor={`schedule-${show.id}`}>
                     Air Date and Time ({STATION_TIME_LABEL})
                     <input
                       id={`schedule-${show.id}`}
                       type="datetime-local"
                       value={scheduleById[show.id] || ""}
                       onChange={(event) => setScheduleById((current) => ({ ...current, [show.id]: event.target.value }))}
-                      className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300"
+                      className="mt-2 w-full rounded-xl border border-paper/15 bg-ink px-3 py-3 text-white outline-none focus:border-signal"
                     />
                   </label>
-                  {show.scheduled_at && <p className="mt-3 text-sm text-zinc-400">Scheduled: {formatStationDateTime(show.scheduled_at)}</p>}
+                  {show.scheduled_at && <p className="mt-3 text-sm text-paper/50">Scheduled: {formatStationDateTime(show.scheduled_at)}</p>}
                   {show.full_show_audio_file?.url && (
                     <div className="mt-5">
-                      <p className="mb-2 text-sm font-medium text-zinc-200">Full Show Audio</p>
+                      <p className="mb-2 text-sm font-medium text-paper/80">Full Show Audio</p>
                       <audio controls src={show.full_show_audio_file.url} className="w-full" />
                     </div>
                   )}
-                  {show.delivery_target && <p className="mt-3 text-sm text-zinc-400">Delivery target: {show.delivery_target}</p>}
-                  {show.delivered_at && <p className="mt-2 text-sm text-zinc-400">Queued: {new Date(show.delivered_at).toLocaleString()}</p>}
+                  {show.delivery_target && <p className="mt-3 text-sm text-paper/50">Delivery target: {show.delivery_target}</p>}
+                  {show.delivered_at && <p className="mt-2 text-sm text-paper/50">Queued: {new Date(show.delivered_at).toLocaleString()}</p>}
                 </div>
               </div>
             </article>

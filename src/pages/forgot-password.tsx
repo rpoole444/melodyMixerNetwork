@@ -23,19 +23,19 @@ const ForgotPassword = () => {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white">
+    <main className="min-h-screen bg-ink text-white">
       <Header title="Password Help" />
       <section className="mx-auto w-full max-w-lg px-4 py-10 sm:px-6">
-        <div className="rounded-md border border-white/10 bg-zinc-900 p-5 sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-amber-300">Host Access</p>
-          <h1 className="mt-3 text-3xl font-semibold">Reset your password.</h1>
-          <p className="mt-2 text-zinc-400">Enter the email used for your host account.</p>
+        <div className="rounded-xl border border-white/10 bg-ink-soft p-5 sm:p-8">
+          <p className="hf-kicker">Studio access</p>
+          <h1 className="mt-3 text-4xl">Reset your password.</h1>
+          <p className="mt-2 text-paper/50">Enter the email used for your host account.</p>
           <form onSubmit={submit} className="mt-6 space-y-4">
-            <label className="block text-sm font-medium text-zinc-200">Email<input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300" /></label>
-            {message && <p className="rounded-md border border-amber-300/40 bg-amber-950/40 p-3 text-sm text-amber-100">{message}</p>}
-            <button type="submit" disabled={isSubmitting} className="w-full rounded-md bg-amber-300 px-4 py-3 font-semibold text-zinc-950 disabled:opacity-60">{isSubmitting ? "Sending..." : "Send Reset Link"}</button>
+            <label className="block text-sm font-medium text-paper/80">Email<input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 w-full rounded-xl border border-paper/15 bg-ink px-3 py-3 text-white outline-none focus:border-signal" /></label>
+            {message && <p className="rounded-xl border border-signal/40 bg-signal/10 p-3 text-sm text-[#ffd5c9]">{message}</p>}
+            <button type="submit" disabled={isSubmitting} className="w-full rounded-xl bg-signal px-4 py-3 font-semibold text-ink disabled:opacity-60">{isSubmitting ? "Sending..." : "Send Reset Link"}</button>
           </form>
-          <Link href="/" className="mt-5 inline-block text-sm text-zinc-300 hover:text-white">Back to sign in</Link>
+          <Link href="/" className="mt-5 inline-block text-sm text-paper/70 hover:text-white">Back to sign in</Link>
         </div>
       </section>
     </main>

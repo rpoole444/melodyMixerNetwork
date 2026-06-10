@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#15120F"/>
+  <path d="M0 95h1200M0 315h1200M0 535h1200M205 0v630M600 0v630M995 0v630" stroke="#F2E9D8" stroke-opacity=".08"/>
+  <circle cx="955" cy="184" r="144" fill="none" stroke="#3157D5" stroke-width="2"/>
+  <circle cx="955" cy="184" r="105" fill="none" stroke="#3157D5" stroke-opacity=".45"/>
+  <path d="M760 184h58l24-65 43 141 42-184 43 149 30-41h62" fill="none" stroke="#FF5A36" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="84" y="235" fill="#F5EEDC" font-family="Georgia, serif" font-size="102">Human</text>
+  <text x="84" y="337" fill="#F5EEDC" font-family="Georgia, serif" font-size="102">Frequency</text>
+  <text x="91" y="423" fill="#FF5A36" font-family="Arial, sans-serif" font-size="30" font-weight="700" letter-spacing="6">HUMAN-MADE RADIO</text>
+  <text x="91" y="486" fill="#F2E9D8" fill-opacity=".62" font-family="Arial, sans-serif" font-size="25">Presented by Alpine Groove Guide</text>
+</svg>

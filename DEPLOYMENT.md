@@ -1,4 +1,4 @@
-# Melody Mixer Production Deployment
+# Human Frequency Production Deployment
 
 ## Architecture
 

@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/router";
 import Header from "@/components/Header";
 import { api, RegistrationInput } from "@/lib/api";
+import { BRAND } from "@/lib/brand";
 
 const emptyUser: RegistrationInput = {
   hostName: "",
@@ -61,20 +62,20 @@ const RegistrationPage = () => {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white">
+    <main className="min-h-screen bg-ink text-white">
       <Header title="Host Registration" />
       <section className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
         <div className="mb-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-amber-300">New Host</p>
-          <h1 className="mt-3 text-4xl font-semibold">Create your host profile.</h1>
-          <p className="mt-3 max-w-2xl text-zinc-300">
-            Registration is invite-only while Alpine Groove Guide is in private alpha. Use the code you received from a station admin.
+          <p className="hf-kicker">New voice on the dial</p>
+          <h1 className="mt-3 text-5xl">Create your Human Frequency profile.</h1>
+          <p className="mt-3 max-w-2xl text-paper/70">
+            {BRAND.name} is invite-only while the host community takes shape. Use the code sent by a station admin.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="rounded-md border border-white/10 bg-zinc-900 p-5 sm:p-8">
-          {message && <p className="mb-5 rounded-md border border-emerald-400/40 bg-emerald-950/40 p-3 text-emerald-100">{message}</p>}
-          {errors.submit && <p className="mb-5 rounded-md border border-red-400/40 bg-red-950/40 p-3 text-red-100">{errors.submit}</p>}
+        <form onSubmit={handleSubmit} className="rounded-xl border border-white/10 bg-ink-soft p-5 sm:p-8">
+          {message && <p className="mb-5 rounded-xl border border-emerald-400/40 bg-emerald-950/40 p-3 text-emerald-100">{message}</p>}
+          {errors.submit && <p className="mb-5 rounded-xl border border-red-400/40 bg-red-950/40 p-3 text-red-100">{errors.submit}</p>}
 
           <div className="grid gap-5 md:grid-cols-2">
             {[
@@ -87,7 +88,7 @@ const RegistrationPage = () => {
               ["password", "Password"],
               ["confirmPassword", "Confirm Password"],
             ].map(([name, label]) => (
-              <label key={name} className="block text-sm font-medium text-zinc-200" htmlFor={name}>
+              <label key={name} className="block text-sm font-medium text-paper/80" htmlFor={name}>
                 {label}
                 <input
                   id={name}
@@ -95,13 +96,13 @@ const RegistrationPage = () => {
                   type={name.toLowerCase().includes("password") ? "password" : name === "email" ? "email" : "text"}
                   value={user[name as keyof RegistrationInput] || ""}
                   onChange={handleChange}
-                  className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300"
+                  className="mt-2 w-full rounded-xl border border-paper/15 bg-ink px-3 py-3 text-white outline-none focus:border-signal"
                 />
                 {errors[name] && <span className="mt-1 block text-xs text-red-200">{errors[name]}</span>}
               </label>
             ))}
 
-            <label className="block text-sm font-medium text-zinc-200 md:col-span-2" htmlFor="description">
+            <label className="block text-sm font-medium text-paper/80 md:col-span-2" htmlFor="description">
               Host Description
               <textarea
                 id="description"
@@ -109,7 +110,7 @@ const RegistrationPage = () => {
                 value={user.description}
                 onChange={handleChange}
                 rows={4}
-                className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300"
+                className="mt-2 w-full rounded-xl border border-paper/15 bg-ink px-3 py-3 text-white outline-none focus:border-signal"
               />
             </label>
           </div>
@@ -117,7 +118,7 @@ const RegistrationPage = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mt-6 rounded-md bg-amber-300 px-5 py-3 font-semibold text-zinc-950 hover:bg-amber-200 disabled:cursor-wait disabled:opacity-70"
+            className="mt-6 rounded-xl bg-signal px-5 py-3 font-semibold text-ink hover:bg-[#ff7658] disabled:cursor-wait disabled:opacity-70"
           >
             {isSubmitting ? "Registering" : "Register Host"}
           </button>

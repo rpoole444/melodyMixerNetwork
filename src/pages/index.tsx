@@ -5,6 +5,8 @@ import { useUser } from "@/contexts/UserContext";
 import { api, PlaylistRecord } from "@/lib/api";
 import { formatStationDateTime } from "@/lib/stationTime";
 import { useEffect, useMemo, useState } from "react";
+import { BRAND } from "@/lib/brand";
+import BrandMark from "@/components/BrandMark";
 
 const formatDuration = (seconds: number) => {
   const hours = Math.floor(seconds / 3600);
@@ -56,17 +58,21 @@ export default function Home() {
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-[url('/record-room.jpg')] bg-cover bg-center text-white">
-        <div className="min-h-screen bg-zinc-950/70">
+      <main className="relative min-h-screen overflow-hidden bg-ink text-cream">
+        <div className="hf-record-grooves pointer-events-none absolute -right-40 -top-40 h-[42rem] w-[42rem] rounded-full opacity-70" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,rgba(21,18,15,0.96)_25%,rgba(21,18,15,0.76)),url('/record-room.jpg')] bg-cover bg-center" />
+        <div className="relative min-h-screen">
           <div className="mx-auto grid min-h-screen w-full max-w-7xl items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1.1fr_0.9fr]">
             <section>
-              <p className="text-sm font-semibold uppercase tracking-[0.35em] text-amber-300">Melody Mixer Network</p>
-              <h1 className="mt-4 max-w-3xl text-5xl font-semibold leading-tight text-white sm:text-6xl">
-                Build, schedule, and manage radio shows from one host desk.
+              <BrandMark href="/listen" />
+              <p className="hf-kicker mt-12">{BRAND.tagline}</p>
+              <h1 className="mt-4 max-w-3xl font-display text-6xl leading-[0.92] tracking-[-0.035em] text-cream sm:text-7xl">
+                Radio with fingerprints on it.
               </h1>
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-zinc-200">
-                Sign in with a Rails account to upload audio, build shows, submit them for review, and prepare stream packages for Alpine Groove Guide.
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-paper/70">
+                A studio for musicians, selectors, bandleaders, and deep listeners to build thoughtful shows by hand. {BRAND.attribution}.
               </p>
+              <Link href="/listen" className="hf-button-secondary mt-8">Listen to Human Frequency</Link>
             </section>
             <LoginComponent />
           </div>
@@ -76,27 +82,28 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white">
-      <Header title="Melody Mixer Network" />
-      <section className="border-b border-white/10 bg-[url('/record-room.jpg')] bg-cover bg-center">
-        <div className="bg-zinc-950/75">
+    <main className="hf-shell">
+      <Header title="Studio Dashboard" />
+      <section className="relative overflow-hidden border-b border-paper/10 bg-[url('/record-room.jpg')] bg-cover bg-center">
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(21,18,15,0.98),rgba(21,18,15,0.68))]" />
+        <div className="relative">
           <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-amber-300">Station Dashboard</p>
+            <p className="hf-kicker">On the desk</p>
             <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h1 className="text-4xl font-semibold">Welcome back, {user.hostName}</h1>
-                <p className="mt-3 max-w-2xl text-zinc-200">
-                  Keep your host profile current, stage new shows, and move approved programming toward a 24/7 Alpine Groove Guide stream.
+                <h1 className="font-display text-5xl text-cream">Good to hear you, {user.hostName || user.firstName}.</h1>
+                <p className="mt-3 max-w-2xl text-paper/65">
+                  Shape the next Human Frequency transmission, from first track to final host break.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
-                <Link href="/CreateShow" className="rounded-md bg-amber-300 px-4 py-3 font-semibold text-zinc-950 hover:bg-amber-200">
+                <Link href="/CreateShow" className="hf-button-primary">
                   Create Show
                 </Link>
-                <Link href="/Library" className="rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-amber-300">
+                <Link href="/Library" className="hf-button-secondary">
                   Library
                 </Link>
-                <Link href="/UserProfile" className="rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-amber-300">
+                <Link href="/UserProfile" className="hf-button-secondary">
                   Profile
                 </Link>
               </div>
@@ -107,30 +114,30 @@ export default function Home() {
 
       <section className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
-          {dashboardMessage && <p className="rounded-md border border-amber-300/40 bg-amber-950/40 p-3 text-sm text-amber-100 sm:col-span-3 lg:col-span-1">{dashboardMessage}</p>}
+          {dashboardMessage && <p className="rounded-xl border border-signal/40 bg-signal/10 p-3 text-sm text-[#ffd5c9] sm:col-span-3 lg:col-span-1">{dashboardMessage}</p>}
           {statCards.map((card) => (
-            <article key={card.label} className="rounded-md border border-white/10 bg-zinc-900 p-5">
-              <p className="text-sm text-zinc-400">{card.label}</p>
-              <p className="mt-2 text-3xl font-semibold text-white">{card.value}</p>
-              <p className="mt-1 text-sm text-amber-200">{card.detail}</p>
+            <article key={card.label} className="hf-panel p-5">
+              <p className="text-sm text-paper/50">{card.label}</p>
+              <p className="mt-2 font-display text-4xl text-cream">{card.value}</p>
+              <p className="mt-1 text-sm text-signal">{card.detail}</p>
             </article>
           ))}
         </div>
 
-        <div className="rounded-md border border-white/10 bg-zinc-900">
-          <div className="border-b border-white/10 p-5">
+        <div className="hf-panel">
+          <div className="border-b border-paper/10 p-5">
             <h2 className="text-xl font-semibold">Today&apos;s Programming</h2>
-            <p className="mt-1 text-sm text-zinc-400">Scheduled shows from the Rails station queue.</p>
+            <p className="mt-1 text-sm text-paper/50">Scheduled shows from the Rails station queue.</p>
           </div>
           <div className="divide-y divide-white/10">
             {scheduledShows.length === 0 ? (
-              <p className="p-5 text-sm text-zinc-400">No scheduled shows yet.</p>
+              <p className="p-5 text-sm text-paper/50">No scheduled shows yet.</p>
             ) : (
               scheduledShows.map((show) => (
               <div key={show.id} className="grid grid-cols-[120px_1fr_auto] items-center gap-4 p-5">
-                <span className="font-mono text-sm text-zinc-400">{formatStationDateTime(show.scheduled_at, false)}</span>
+                <span className="font-mono text-sm text-paper/50">{formatStationDateTime(show.scheduled_at, false)}</span>
                 <span className="font-medium text-white">{show.name}</span>
-                <span className="rounded-full border border-amber-300/40 px-3 py-1 text-xs text-amber-100">{show.status}</span>
+                <span className="rounded-full border border-signal/40 px-3 py-1 text-xs text-[#ffd5c9]">{show.status}</span>
               </div>
               ))
             )}

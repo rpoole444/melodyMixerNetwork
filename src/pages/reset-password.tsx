@@ -43,21 +43,21 @@ const ResetPassword = () => {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white">
+    <main className="min-h-screen bg-ink text-white">
       <Header title="Choose Password" />
       <section className="mx-auto w-full max-w-lg px-4 py-10 sm:px-6">
-        <div className="rounded-md border border-white/10 bg-zinc-900 p-5 sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-amber-300">Host Access</p>
-          <h1 className="mt-3 text-3xl font-semibold">Choose a new password.</h1>
+        <div className="rounded-xl border border-white/10 bg-ink-soft p-5 sm:p-8">
+          <p className="hf-kicker">Studio access</p>
+          <h1 className="mt-3 text-4xl">Choose a new password.</h1>
           {!complete && (
             <form onSubmit={submit} className="mt-6 space-y-4">
-              <label className="block text-sm font-medium text-zinc-200">New Password<input type="password" required value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300" /></label>
-              <label className="block text-sm font-medium text-zinc-200">Confirm Password<input type="password" required value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300" /></label>
-              <button type="submit" disabled={isSubmitting} className="w-full rounded-md bg-amber-300 px-4 py-3 font-semibold text-zinc-950 disabled:opacity-60">{isSubmitting ? "Resetting..." : "Reset Password"}</button>
+              <label className="block text-sm font-medium text-paper/80">New Password<input type="password" required value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 w-full rounded-xl border border-paper/15 bg-ink px-3 py-3 text-white outline-none focus:border-signal" /></label>
+              <label className="block text-sm font-medium text-paper/80">Confirm Password<input type="password" required value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className="mt-2 w-full rounded-xl border border-paper/15 bg-ink px-3 py-3 text-white outline-none focus:border-signal" /></label>
+              <button type="submit" disabled={isSubmitting} className="w-full rounded-xl bg-signal px-4 py-3 font-semibold text-ink disabled:opacity-60">{isSubmitting ? "Resetting..." : "Reset Password"}</button>
             </form>
           )}
-          {message && <p className="mt-5 rounded-md border border-amber-300/40 bg-amber-950/40 p-3 text-sm text-amber-100">{message}</p>}
-          <Link href={complete ? "/" : "/forgot-password"} className="mt-5 inline-block text-sm font-semibold text-amber-200">{complete ? "Go to sign in" : "Request a new link"}</Link>
+          {message && <p className="mt-5 rounded-xl border border-signal/40 bg-signal/10 p-3 text-sm text-[#ffd5c9]">{message}</p>}
+          <Link href={complete ? "/" : "/forgot-password"} className="mt-5 inline-block text-sm font-semibold text-[#ff9a82]">{complete ? "Go to sign in" : "Request a new link"}</Link>
         </div>
       </section>
     </main>

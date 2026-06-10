@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useUser } from "@/contexts/UserContext";
+import { BRAND } from "@/lib/brand";
 
 const LoginComponent = () => {
   const [email, setEmail] = useState("");
@@ -13,17 +14,18 @@ const LoginComponent = () => {
   };
 
   return (
-    <section className="w-full max-w-md rounded-md border border-white/10 bg-zinc-950/90 p-6 shadow-2xl">
+    <section className="hf-panel w-full max-w-md p-6 sm:p-8">
       <div className="mb-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-amber-300">Host Access</p>
-        <h2 className="mt-2 text-2xl font-semibold text-white">Sign in to the station desk</h2>
+        <p className="hf-kicker">Studio Access</p>
+        <h2 className="mt-3 font-display text-3xl text-cream">Enter the broadcast studio.</h2>
+        <p className="mt-2 text-sm text-paper/55">{BRAND.tagline}. Your shows, library, and station tools live here.</p>
       </div>
 
       <form onSubmit={handleLogin} className="space-y-4">
-        <label className="block text-sm font-medium text-zinc-200" htmlFor="email">
+        <label className="block text-sm font-semibold text-paper/80" htmlFor="email">
           Email
           <input
-            className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-3 text-white outline-none focus:border-amber-300"
+            className="hf-input"
             id="email"
             type="email"
             placeholder="host@example.com"
@@ -33,10 +35,10 @@ const LoginComponent = () => {
           />
         </label>
 
-        <label className="block text-sm font-medium text-zinc-200" htmlFor="password">
+        <label className="block text-sm font-semibold text-paper/80" htmlFor="password">
           Password
           <input
-            className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-3 text-white outline-none focus:border-amber-300"
+            className="hf-input"
             id="password"
             type="password"
             placeholder="Password"
@@ -46,11 +48,11 @@ const LoginComponent = () => {
           />
         </label>
 
-        {error && <p className="rounded-md border border-red-400/40 bg-red-950/40 p-3 text-sm text-red-100">{error}</p>}
+        {error && <p className="rounded-xl border border-red-400/40 bg-red-950/40 p-3 text-sm text-red-100">{error}</p>}
 
         <div>
           <button
-            className="w-full rounded-md bg-amber-300 px-4 py-3 font-semibold text-zinc-950 hover:bg-amber-200 disabled:cursor-wait disabled:opacity-70"
+            className="hf-button-primary w-full"
             type="submit"
             disabled={status === "loading"}
           >
@@ -60,10 +62,10 @@ const LoginComponent = () => {
       </form>
 
       <div className="mt-5 flex items-center justify-between text-sm">
-        <Link href="/Registration" className="font-semibold text-amber-200 hover:text-amber-100">
+        <Link href="/Registration" className="font-semibold text-signal hover:text-[#ff9a82]">
           Register a host
         </Link>
-        <Link href="/forgot-password" className="text-zinc-300 hover:text-white">
+        <Link href="/forgot-password" className="text-paper/60 hover:text-cream">
           Forgot password?
         </Link>
       </div>

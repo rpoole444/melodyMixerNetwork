@@ -1,4 +1,4 @@
-# Melody Mixer Frontend Backend Contract
+# Human Frequency Frontend Backend Contract
 
 The frontend uses `NEXT_PUBLIC_API_BASE_URL` for Rails API calls. If it is not set, it defaults to `http://localhost:3001/api/v1` so the Next dev server can run on `http://localhost:3000`.
 

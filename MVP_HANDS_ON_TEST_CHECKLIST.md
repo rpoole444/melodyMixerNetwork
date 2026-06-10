@@ -1,4 +1,4 @@
-# Melody Mixer Network MVP Hands-On Test
+# Human Frequency MVP Hands-On Test
 
 Use this checklist from top to bottom. Record anything confusing, even when the feature technically works.
 

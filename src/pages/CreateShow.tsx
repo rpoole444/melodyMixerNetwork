@@ -513,21 +513,21 @@ const CreateShow = () => {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white">
+    <main className="min-h-screen bg-ink text-white">
       <Header title="Create Show" />
       <section className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-10 sm:px-6 lg:grid-cols-[1.1fr_0.9fr]">
         {!user ? (
-          <div className="rounded-md border border-amber-300/40 bg-amber-950/30 p-6 lg:col-span-2">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-amber-300">Host Access Required</p>
+          <div className="rounded-xl border border-signal/40 bg-signal/30 p-6 lg:col-span-2">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-signal">Host Access Required</p>
             <h1 className="mt-3 text-3xl font-semibold">Sign in before building a show.</h1>
-            <p className="mt-3 max-w-2xl text-zinc-300">Shows, uploads, drafts, and stream packages are now tied to Rails accounts.</p>
+            <p className="mt-3 max-w-2xl text-paper/70">Shows, uploads, drafts, and stream packages are now tied to Rails accounts.</p>
           </div>
         ) : (
         <>
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-amber-300">Create Show</p>
-          <h1 className="mt-3 text-4xl font-semibold">{editingShowId ? "Edit your saved show." : "Prepare a show for the station."}</h1>
-          <p className="mt-3 max-w-2xl text-zinc-300">
+          <p className="hf-kicker">Human Frequency studio</p>
+          <h1 className="mt-3 text-5xl">{editingShowId ? "Tune your saved show." : "Build something worth hearing."}</h1>
+          <p className="mt-3 max-w-2xl text-paper/70">
             Start with the show title and notes. Then upload one complete show file, build the show from songs and host breaks, or do both.
           </p>
 
@@ -537,43 +537,43 @@ const CreateShow = () => {
               ["2", "Audio", "Upload a full show or add songs and breaks."],
               ["3", "Lineup", "Review the final order before saving."],
             ].map(([step, title, copy]) => (
-              <div key={step} className="rounded-md border border-white/10 bg-zinc-900 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Step {step}</p>
+              <div key={step} className="rounded-xl border border-white/10 bg-ink-soft p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-signal">Step {step}</p>
                 <h2 className="mt-2 text-lg font-semibold">{title}</h2>
-                <p className="mt-1 text-sm text-zinc-400">{copy}</p>
+                <p className="mt-1 text-sm text-paper/50">{copy}</p>
               </div>
             ))}
           </section>
 
-          <section className="mt-8 rounded-md border border-white/10 bg-zinc-900 p-5">
+          <section className="mt-8 rounded-xl border border-white/10 bg-ink-soft p-5">
             <div className="mb-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Step 1</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-signal">Step 1</p>
               <h2 className="mt-2 text-xl font-semibold">Show Info</h2>
-              <p className="mt-1 text-sm text-zinc-400">These details identify the show in your library and in the station schedule.</p>
+              <p className="mt-1 text-sm text-paper/50">These details identify the show in your library and in the station schedule.</p>
             </div>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <label className="block text-sm font-medium text-zinc-200" htmlFor="hostName">
+              <label className="block text-sm font-medium text-paper/80" htmlFor="hostName">
                 Host
-                <input id="hostName" value={hostName} disabled className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-zinc-400" />
+                <input id="hostName" value={hostName} disabled className="mt-2 w-full rounded-xl border border-paper/15 bg-ink px-3 py-3 text-paper/50" />
               </label>
-              <label className="block text-sm font-medium text-zinc-200" htmlFor="showTitle">
+              <label className="block text-sm font-medium text-paper/80" htmlFor="showTitle">
                 Show Title
-                <input id="showTitle" value={showTitle} onChange={(e) => setShowTitle(e.target.value)} className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300" />
+                <input id="showTitle" value={showTitle} onChange={(e) => setShowTitle(e.target.value)} className="mt-2 w-full rounded-xl border border-paper/15 bg-ink px-3 py-3 text-white outline-none focus:border-signal" />
               </label>
-              <div className="rounded-md border border-white/10 bg-zinc-950 p-4 text-sm text-zinc-300">
+              <div className="rounded-xl border border-white/10 bg-ink p-4 text-sm text-paper/70">
                 <p className="font-semibold text-white">You focus on the show.</p>
                 <p className="mt-1">Save a draft while you work, then submit it. The station team handles approval and airtime.</p>
               </div>
-              <label className="block text-sm font-medium text-zinc-200 md:col-span-2" htmlFor="showDescription">
+              <label className="block text-sm font-medium text-paper/80 md:col-span-2" htmlFor="showDescription">
                 Show Notes
-                <textarea id="showDescription" value={showDescription} onChange={(e) => setShowDescription(e.target.value)} rows={4} className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300" />
+                <textarea id="showDescription" value={showDescription} onChange={(e) => setShowDescription(e.target.value)} rows={4} className="mt-2 w-full rounded-xl border border-paper/15 bg-ink px-3 py-3 text-white outline-none focus:border-signal" />
               </label>
               <div className="md:col-span-2">
-                <p className="text-sm font-medium text-zinc-200">Option A: Upload Complete Show</p>
-                <div className="mt-2 flex flex-col gap-3 rounded-md border border-zinc-700 bg-zinc-950 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-sm text-zinc-300">{fullShowFile ? `${fullShowFile.name} · ${formatFileSize(fullShowFile.size)} · ${secondsToInput(fullShowDuration)}` : existingFullShowName ? `Current full show: ${existingFullShowName}` : "Use this when the show is already mixed into one audio file."}</span>
+                <p className="text-sm font-medium text-paper/80">Option A: Upload Complete Show</p>
+                <div className="mt-2 flex flex-col gap-3 rounded-xl border border-paper/15 bg-ink p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-sm text-paper/70">{fullShowFile ? `${fullShowFile.name} · ${formatFileSize(fullShowFile.size)} · ${secondsToInput(fullShowDuration)}` : existingFullShowName ? `Current full show: ${existingFullShowName}` : "Use this when the show is already mixed into one audio file."}</span>
                   <input ref={fullShowInputRef} type="file" accept={audioAccept} className="hidden" onChange={(e) => handleFullShowFileChange(e.target.files)} />
-                  <button type="button" onClick={openFullShowPicker} className="rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-amber-300">
+                  <button type="button" onClick={openFullShowPicker} className="rounded-xl border border-white/15 px-4 py-3 font-semibold text-white hover:border-signal">
                     Select Full Show
                   </button>
                 </div>
@@ -581,11 +581,11 @@ const CreateShow = () => {
             </div>
           </section>
 
-          <section className="mt-6 rounded-md border border-white/10 bg-zinc-900 p-5">
+          <section className="mt-6 rounded-xl border border-white/10 bg-ink-soft p-5">
             <div className="mb-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Step 2</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-signal">Step 2</p>
               <h2 className="mt-2 text-xl font-semibold">Option B: Add Songs and Host Breaks</h2>
-              <p className="mt-1 text-sm text-zinc-400">Add a new song, a station ID, an intro, an interview clip, or a recorded voice break to the show lineup.</p>
+              <p className="mt-1 text-sm text-paper/50">Add a new song, a station ID, an intro, an interview clip, or a recorded voice break to the show lineup.</p>
             </div>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               {[
@@ -594,26 +594,26 @@ const CreateShow = () => {
                 ["album", "Album, Project, or Segment Type"],
                 ["length", "Length"],
               ].map(([field, label]) => (
-                <label key={field} className="block text-sm font-medium text-zinc-200" htmlFor={field}>
+                <label key={field} className="block text-sm font-medium text-paper/80" htmlFor={field}>
                   {label}
-                  <input id={field} value={draftTrack[field as keyof DraftTrack] || ""} onChange={(e) => handleDraftChange(field as keyof DraftTrack, e.target.value)} className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300" />
+                  <input id={field} value={draftTrack[field as keyof DraftTrack] || ""} onChange={(e) => handleDraftChange(field as keyof DraftTrack, e.target.value)} className="mt-2 w-full rounded-xl border border-paper/15 bg-ink px-3 py-3 text-white outline-none focus:border-signal" />
                 </label>
               ))}
-              <label className="block text-sm font-medium text-zinc-200 md:col-span-2" htmlFor="details">
+              <label className="block text-sm font-medium text-paper/80 md:col-span-2" htmlFor="details">
                 Notes
-                <textarea id="details" value={draftTrack.details} onChange={(e) => handleDraftChange("details", e.target.value)} rows={3} className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-amber-300" />
+                <textarea id="details" value={draftTrack.details} onChange={(e) => handleDraftChange("details", e.target.value)} rows={3} className="mt-2 w-full rounded-xl border border-paper/15 bg-ink px-3 py-3 text-white outline-none focus:border-signal" />
               </label>
             </div>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
               <input ref={fileInputRef} type="file" accept={audioAccept} className="hidden" onChange={(e) => handleFileChange(e.target.files)} />
-              <button type="button" onClick={openTrackPicker} className="rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-amber-300">
+              <button type="button" onClick={openTrackPicker} className="rounded-xl border border-white/15 px-4 py-3 font-semibold text-white hover:border-signal">
                 {trackFile ? trackFile.name : "Attach Audio"}
               </button>
-              <button type="button" onClick={isRecording ? stopRecording : startRecording} className="rounded-md border border-white/15 px-4 py-3 font-semibold text-white hover:border-red-300">
+              <button type="button" onClick={isRecording ? stopRecording : startRecording} className="rounded-xl border border-white/15 px-4 py-3 font-semibold text-white hover:border-red-300">
                 {isRecording ? "Stop Recording" : "Record Break"}
               </button>
-              <button type="button" onClick={addTrack} disabled={isUploadingTrack} className="rounded-md bg-amber-300 px-4 py-3 font-semibold text-zinc-950 hover:bg-amber-200 disabled:cursor-wait disabled:opacity-70">
+              <button type="button" onClick={addTrack} disabled={isUploadingTrack} className="rounded-xl bg-signal px-4 py-3 font-semibold text-ink hover:bg-[#ff7658] disabled:cursor-wait disabled:opacity-70">
                 {isUploadingTrack ? `Uploading ${uploadProgress || 0}%` : uploadFailed ? "Retry Upload" : "Add to Lineup"}
               </button>
             </div>
@@ -623,69 +623,69 @@ const CreateShow = () => {
         </div>
 
         <aside className="space-y-6">
-          <section className="rounded-md border border-white/10 bg-zinc-900 p-5">
+          <section className="rounded-xl border border-white/10 bg-ink-soft p-5">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-zinc-400">Lineup Items</p>
+                <p className="text-sm text-paper/50">Lineup Items</p>
                 <p className="mt-1 text-3xl font-semibold">{totalTracks}</p>
               </div>
               <div>
-                <p className="text-sm text-zinc-400">Named Items</p>
+                <p className="text-sm text-paper/50">Named Items</p>
                 <p className="mt-1 text-3xl font-semibold">{readyTracks}</p>
               </div>
             </div>
-            {message && <p className="mt-5 rounded-md border border-amber-300/40 bg-amber-950/40 p-3 text-sm text-amber-100">{message}</p>}
+            {message && <p className="mt-5 rounded-xl border border-signal/40 bg-signal/10 p-3 text-sm text-[#ffd5c9]">{message}</p>}
             {uploadProgress !== null && (
               <div className="mt-5">
-                <div className="flex justify-between text-xs text-zinc-300"><span>Uploading audio</span><span>{uploadProgress}%</span></div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-800"><div className="h-full bg-amber-300 transition-all" style={{ width: `${uploadProgress}%` }} /></div>
+                <div className="flex justify-between text-xs text-paper/70"><span>Uploading audio</span><span>{uploadProgress}%</span></div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-paper/10"><div className="h-full bg-signal transition-all" style={{ width: `${uploadProgress}%` }} /></div>
               </div>
             )}
-            <div className="mt-5 rounded-md border border-white/10 bg-zinc-950 p-4">
+            <div className="mt-5 rounded-xl border border-white/10 bg-ink p-4">
               <h2 className="font-semibold">Ready to submit?</h2>
-              <p className="mt-1 text-sm text-zinc-400">Confirm these when the lineup and audio are final.</p>
+              <p className="mt-1 text-sm text-paper/50">Confirm these when the lineup and audio are final.</p>
               <div className="mt-4 space-y-3 text-sm">
-                <label className="flex items-start gap-3"><input type="checkbox" checked={audioAuthorized} onChange={(event) => setAudioAuthorized(event.target.checked)} className="mt-1 h-4 w-4 accent-amber-300" /><span>I have permission to provide this audio for station playback.</span></label>
-                <label className="flex items-start gap-3"><input type="checkbox" checked={metadataConfirmed} onChange={(event) => setMetadataConfirmed(event.target.checked)} className="mt-1 h-4 w-4 accent-amber-300" /><span>The artist, title, and lineup information are accurate.</span></label>
-                <fieldset className="rounded-md border border-white/10 p-3">
+                <label className="flex items-start gap-3"><input type="checkbox" checked={audioAuthorized} onChange={(event) => setAudioAuthorized(event.target.checked)} className="mt-1 h-4 w-4 accent-signal" /><span>I have permission to provide this audio for station playback.</span></label>
+                <label className="flex items-start gap-3"><input type="checkbox" checked={metadataConfirmed} onChange={(event) => setMetadataConfirmed(event.target.checked)} className="mt-1 h-4 w-4 accent-signal" /><span>The artist, title, and lineup information are accurate.</span></label>
+                <fieldset className="rounded-xl border border-white/10 p-3">
                   <legend className="px-1 font-medium">Does this show contain explicit content?</legend>
                   <div className="mt-2 flex gap-5">
-                    <label className="flex items-center gap-2"><input type="radio" name="explicit-content" checked={!containsExplicitContent} onChange={() => setContainsExplicitContent(false)} className="accent-amber-300" />No</label>
-                    <label className="flex items-center gap-2"><input type="radio" name="explicit-content" checked={containsExplicitContent} onChange={() => setContainsExplicitContent(true)} className="accent-amber-300" />Yes</label>
+                    <label className="flex items-center gap-2"><input type="radio" name="explicit-content" checked={!containsExplicitContent} onChange={() => setContainsExplicitContent(false)} className="accent-signal" />No</label>
+                    <label className="flex items-center gap-2"><input type="radio" name="explicit-content" checked={containsExplicitContent} onChange={() => setContainsExplicitContent(true)} className="accent-signal" />Yes</label>
                   </div>
                 </fieldset>
-                <label className="flex items-start gap-3"><input type="checkbox" checked={explicitContentConfirmed} onChange={(event) => setExplicitContentConfirmed(event.target.checked)} className="mt-1 h-4 w-4 accent-amber-300" /><span>I reviewed the full show and the explicit-content answer above is accurate.</span></label>
+                <label className="flex items-start gap-3"><input type="checkbox" checked={explicitContentConfirmed} onChange={(event) => setExplicitContentConfirmed(event.target.checked)} className="mt-1 h-4 w-4 accent-signal" /><span>I reviewed the full show and the explicit-content answer above is accurate.</span></label>
               </div>
-              <p className="mt-3 text-xs leading-5 text-zinc-500">These confirmations support station review. They do not replace the station’s broadcast licensing responsibilities.</p>
+              <p className="mt-3 text-xs leading-5 text-paper/35">These confirmations support station review. They do not replace the station’s broadcast licensing responsibilities.</p>
             </div>
-            <button type="button" onClick={() => saveShow("draft")} disabled={isSavingShow} className="mt-5 w-full rounded-md bg-amber-300 px-4 py-3 font-semibold text-zinc-950 hover:bg-amber-200 disabled:cursor-wait disabled:opacity-70">
+            <button type="button" onClick={() => saveShow("draft")} disabled={isSavingShow} className="mt-5 w-full rounded-xl bg-signal px-4 py-3 font-semibold text-ink hover:bg-[#ff7658] disabled:cursor-wait disabled:opacity-70">
               {isSavingShow ? "Saving" : "Save Draft"}
             </button>
-            <button type="button" onClick={() => saveShow("submitted")} disabled={isSavingShow} className="mt-3 w-full rounded-md border border-amber-300 px-4 py-3 font-semibold text-amber-100 hover:bg-amber-300 hover:text-zinc-950 disabled:cursor-wait disabled:opacity-70">
+            <button type="button" onClick={() => saveShow("submitted")} disabled={isSavingShow} className="mt-3 w-full rounded-xl border border-signal px-4 py-3 font-semibold text-[#ffd5c9] hover:bg-signal hover:text-ink disabled:cursor-wait disabled:opacity-70">
               Submit Show
             </button>
           </section>
 
-          <section className="rounded-md border border-white/10 bg-zinc-900">
+          <section className="rounded-xl border border-white/10 bg-ink-soft">
             <div className="flex items-center justify-between border-b border-white/10 p-5">
               <div>
                 <h2 className="text-xl font-semibold">Quick Library Picks</h2>
-                <p className="mt-1 text-sm text-zinc-400">Search the shared crates without leaving your show.</p>
+                <p className="mt-1 text-sm text-paper/50">Search the shared crates without leaving your show.</p>
               </div>
-              <Link href="/Library" className="rounded-md border border-amber-300/40 px-3 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-300 hover:text-zinc-950">Open Full Library</Link>
+              <Link href="/Library" className="rounded-xl border border-signal/40 px-3 py-2 text-sm font-semibold text-[#ffd5c9] hover:bg-signal hover:text-ink">Open Full Library</Link>
             </div>
             <div className="grid gap-3 border-b border-white/10 p-5">
               <input
                 value={librarySearch}
                 onChange={(e) => setLibrarySearch(e.target.value)}
                 placeholder="Search title, artist, album, or genre"
-                className="w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-sm text-white outline-none focus:border-amber-300"
+                className="w-full rounded-xl border border-paper/15 bg-ink px-3 py-3 text-sm text-white outline-none focus:border-signal"
               />
               <div className="grid gap-3 sm:grid-cols-2">
                 <select
                   value={libraryKind}
                   onChange={(e) => setLibraryKind(e.target.value)}
-                  className="rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-sm text-white outline-none focus:border-amber-300"
+                  className="rounded-xl border border-paper/15 bg-ink px-3 py-3 text-sm text-white outline-none focus:border-signal"
                 >
                   <option value="all">All audio types</option>
                   <option value="track">Tracks</option>
@@ -695,7 +695,7 @@ const CreateShow = () => {
                 <select
                   value={libraryVisibility}
                   onChange={(e) => setLibraryVisibility(e.target.value)}
-                  className="rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-sm text-white outline-none focus:border-amber-300"
+                  className="rounded-xl border border-paper/15 bg-ink px-3 py-3 text-sm text-white outline-none focus:border-signal"
                 >
                   <option value="shared">Shared station library</option>
                   <option value="all">Shared and my private audio</option>
@@ -704,25 +704,25 @@ const CreateShow = () => {
                 </select>
               </div>
             </div>
-            {libraryStatus && <p className="p-5 text-sm text-amber-100">{libraryStatus}</p>}
-            {!libraryStatus && libraryTracks.length === 0 && <p className="p-5 text-sm text-zinc-400">No library tracks yet.</p>}
-            {!libraryStatus && libraryTracks.length > 0 && filteredLibraryTracks.length === 0 && <p className="p-5 text-sm text-zinc-400">No audio matches these filters.</p>}
+            {libraryStatus && <p className="p-5 text-sm text-[#ffd5c9]">{libraryStatus}</p>}
+            {!libraryStatus && libraryTracks.length === 0 && <p className="p-5 text-sm text-paper/50">No library tracks yet.</p>}
+            {!libraryStatus && libraryTracks.length > 0 && filteredLibraryTracks.length === 0 && <p className="p-5 text-sm text-paper/50">No audio matches these filters.</p>}
             <div className="divide-y divide-white/10">
               {filteredLibraryTracks.slice(0, 8).map((audioFile) => (
                 <article key={audioFile.id} className="p-4">
                   <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
                     <div className="min-w-0">
                       <h3 className="truncate font-semibold">{audioFile.title || audioFile.name}</h3>
-                      <p className="truncate text-sm text-zinc-400">{audioFile.artist || "Unknown Artist"}{audioFile.album ? ` · ${audioFile.album}` : ""}</p>
-                      <p className="mt-1 text-xs text-zinc-500">{audioFile.genre || "Uncategorized"} · {formatAudioDuration(audioFile.duration)} · {audioFile.owner_name || "Station host"}</p>
+                      <p className="truncate text-sm text-paper/50">{audioFile.artist || "Unknown Artist"}{audioFile.album ? ` · ${audioFile.album}` : ""}</p>
+                      <p className="mt-1 text-xs text-paper/35">{audioFile.genre || "Uncategorized"} · {formatAudioDuration(audioFile.duration)} · {audioFile.owner_name || "Station host"}</p>
                     </div>
-                    <button type="button" onClick={() => addLibraryTrack(audioFile)} className="rounded-md bg-amber-300 px-3 py-2 text-sm font-semibold text-zinc-950 hover:bg-amber-200">
+                    <button type="button" onClick={() => addLibraryTrack(audioFile)} className="rounded-xl bg-signal px-3 py-2 text-sm font-semibold text-ink hover:bg-[#ff7658]">
                       Add
                     </button>
                   </div>
-                  <details className="mt-3 rounded-md border border-white/10 bg-zinc-950 p-3">
-                    <summary className="cursor-pointer text-sm font-semibold text-amber-100">See more and listen</summary>
-                    {audioFile.notes && <p className="mt-3 text-sm text-zinc-300">{audioFile.notes}</p>}
+                  <details className="mt-3 rounded-xl border border-white/10 bg-ink p-3">
+                    <summary className="cursor-pointer text-sm font-semibold text-[#ffd5c9]">See more and listen</summary>
+                    {audioFile.notes && <p className="mt-3 text-sm text-paper/70">{audioFile.notes}</p>}
                     {audioFile.url && <audio controls preload="none" src={audioFile.url} className="mt-3 w-full" />}
                   </details>
                 </article>
@@ -730,20 +730,20 @@ const CreateShow = () => {
             </div>
             {filteredLibraryTracks.length > 8 && (
               <div className="border-t border-white/10 p-4 text-center">
-                <Link href="/Library" className="text-sm font-semibold text-amber-200 hover:text-amber-100">See all {filteredLibraryTracks.length} matching library items</Link>
+                <Link href="/Library" className="text-sm font-semibold text-[#ff9a82] hover:text-[#ffd5c9]">See all {filteredLibraryTracks.length} matching library items</Link>
               </div>
             )}
           </section>
 
-          <section className="rounded-md border border-white/10 bg-zinc-900">
+          <section className="rounded-xl border border-white/10 bg-ink-soft">
             <div className="border-b border-white/10 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Step 3</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-signal">Step 3</p>
               <h2 className="mt-2 text-xl font-semibold">Show Lineup</h2>
-              <p className="mt-1 text-sm text-zinc-400">This is the order the show will be saved in.</p>
+              <p className="mt-1 text-sm text-paper/50">This is the order the show will be saved in.</p>
             </div>
             <div className="divide-y divide-white/10">
               {tracks.length === 0 ? (
-                <p className="p-5 text-sm text-zinc-400">No songs or breaks added yet.</p>
+                <p className="p-5 text-sm text-paper/50">No songs or breaks added yet.</p>
               ) : (
                 tracks.map((track, index) => (
                   <article key={track.id} className="p-5">
@@ -753,24 +753,24 @@ const CreateShow = () => {
                         onClick={() => setExpandedTrackId((current) => (current === track.id ? null : track.id))}
                         className="min-w-0 flex-1 text-left"
                       >
-                        <p className="text-xs uppercase tracking-[0.2em] text-amber-300">#{index + 1} {track.kind}</p>
+                        <p className="text-xs uppercase tracking-[0.2em] text-signal">#{index + 1} {track.kind}</p>
                         <h3 className="mt-1 truncate font-semibold">{track.title}</h3>
-                        <p className="truncate text-sm text-zinc-400">{track.artist} {track.length && `- ${track.length}`}</p>
+                        <p className="truncate text-sm text-paper/50">{track.artist} {track.length && `- ${track.length}`}</p>
                       </button>
                       <div className="grid grid-cols-3 gap-2 sm:flex sm:shrink-0 sm:items-center">
-                        <button type="button" onClick={() => moveTrack(track.id, "up")} disabled={index === 0} className="rounded-md border border-white/15 px-3 py-2 text-sm text-zinc-200 hover:border-amber-300 disabled:cursor-not-allowed disabled:opacity-40">
+                        <button type="button" onClick={() => moveTrack(track.id, "up")} disabled={index === 0} className="rounded-xl border border-white/15 px-3 py-2 text-sm text-paper/80 hover:border-signal disabled:cursor-not-allowed disabled:opacity-40">
                           Up
                         </button>
-                        <button type="button" onClick={() => moveTrack(track.id, "down")} disabled={index === tracks.length - 1} className="rounded-md border border-white/15 px-3 py-2 text-sm text-zinc-200 hover:border-amber-300 disabled:cursor-not-allowed disabled:opacity-40">
+                        <button type="button" onClick={() => moveTrack(track.id, "down")} disabled={index === tracks.length - 1} className="rounded-xl border border-white/15 px-3 py-2 text-sm text-paper/80 hover:border-signal disabled:cursor-not-allowed disabled:opacity-40">
                           Down
                         </button>
-                        <button type="button" onClick={() => removeTrack(track.id)} className="rounded-md border border-white/15 px-3 py-2 text-sm text-zinc-200 hover:border-red-300">
+                        <button type="button" onClick={() => removeTrack(track.id)} className="rounded-xl border border-white/15 px-3 py-2 text-sm text-paper/80 hover:border-red-300">
                           Remove
                         </button>
                       </div>
                     </div>
                     {expandedTrackId === track.id && (
-                      <div className="mt-4 rounded-md border border-white/10 bg-zinc-950 p-4">
+                      <div className="mt-4 rounded-xl border border-white/10 bg-ink p-4">
                         <div className="grid gap-3 text-sm sm:grid-cols-2">
                           {[
                             ["title", "Title"],
@@ -778,36 +778,36 @@ const CreateShow = () => {
                             ["album", "Album / Segment"],
                             ["length", "Duration in seconds"],
                           ].map(([field, label]) => (
-                            <label key={field} className="block font-medium text-zinc-200" htmlFor={`lineup-${track.id}-${field}`}>
+                            <label key={field} className="block font-medium text-paper/80" htmlFor={`lineup-${track.id}-${field}`}>
                               {label}
                               <input
                                 id={`lineup-${track.id}-${field}`}
                                 value={track[field as keyof TrackInput] || ""}
                                 onChange={(event) => updateLineupTrack(track.id, { [field]: event.target.value })}
-                                className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-white outline-none focus:border-amber-300"
+                                className="mt-2 w-full rounded-xl border border-paper/15 bg-ink px-3 py-2 text-white outline-none focus:border-signal"
                               />
                             </label>
                           ))}
-                          <label className="block font-medium text-zinc-200 sm:col-span-2" htmlFor={`lineup-${track.id}-details`}>
+                          <label className="block font-medium text-paper/80 sm:col-span-2" htmlFor={`lineup-${track.id}-details`}>
                             Notes
                             <textarea
                               id={`lineup-${track.id}-details`}
                               value={track.details || ""}
                               onChange={(event) => updateLineupTrack(track.id, { details: event.target.value })}
                               rows={2}
-                              className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-white outline-none focus:border-amber-300"
+                              className="mt-2 w-full rounded-xl border border-paper/15 bg-ink px-3 py-2 text-white outline-none focus:border-signal"
                             />
                           </label>
                           <div className="sm:col-span-2">
-                            <p className="text-zinc-500">Audio File</p>
-                            <p className="mt-1 text-zinc-200">{track.fileName || "No file attached"}</p>
+                            <p className="text-paper/35">Audio File</p>
+                            <p className="mt-1 text-paper/80">{track.fileName || "No file attached"}</p>
                           </div>
                         </div>
                         {track.audioFileId && libraryTracks.find((audioFile) => audioFile.id === track.audioFileId)?.owned_by_current_user && (
                           <button
                             type="button"
                             onClick={() => saveLineupTrackToLibrary(track)}
-                            className="mt-3 rounded-md border border-white/15 px-3 py-2 text-sm text-zinc-200 hover:border-amber-300"
+                            className="mt-3 rounded-xl border border-white/15 px-3 py-2 text-sm text-paper/80 hover:border-signal"
                           >
                             Save to Library Metadata
                           </button>
@@ -821,9 +821,9 @@ const CreateShow = () => {
             </div>
           </section>
 
-          <details className="hidden rounded-md border border-white/10 bg-zinc-900 p-5 lg:block">
+          <details className="hidden rounded-xl border border-white/10 bg-ink-soft p-5 lg:block">
             <summary className="cursor-pointer text-xl font-semibold">Developer Preview</summary>
-            <pre className="mt-4 max-h-80 overflow-auto rounded-md bg-zinc-950 p-4 text-xs text-zinc-300">
+            <pre className="mt-4 max-h-80 overflow-auto rounded-xl bg-ink p-4 text-xs text-paper/70">
               {JSON.stringify(backendPreview, null, 2)}
             </pre>
           </details>

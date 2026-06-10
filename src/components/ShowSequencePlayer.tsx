@@ -29,7 +29,7 @@ const ShowSequencePlayer = ({ items }: ShowSequencePlayerProps) => {
 
   if (!currentItem) {
     return (
-      <p className="mt-4 rounded-md border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-100">
+      <p className="mt-4 rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-100">
         A continuous preview is unavailable until the lineup has playable audio.
       </p>
     );
@@ -50,12 +50,12 @@ const ShowSequencePlayer = ({ items }: ShowSequencePlayerProps) => {
   };
 
   return (
-    <section className="mt-4 rounded-md border border-amber-300/25 bg-amber-300/5 p-4">
+    <section className="mt-4 rounded-xl border border-signal/25 bg-signal/5 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Continuous show preview</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#ff9a82]">Continuous show preview</p>
           <p className="mt-1 font-semibold text-white">{currentItem.title}</p>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-paper/50">
             Item {currentIndex + 1} of {items.length}
             {currentItem.artist ? ` · ${currentItem.artist}` : ""}
             {" · "}{formatTime(currentItem.startOffsetSeconds)}–{formatTime(currentItem.endOffsetSeconds)}
@@ -66,7 +66,7 @@ const ShowSequencePlayer = ({ items }: ShowSequencePlayerProps) => {
             type="button"
             onClick={() => selectItem(Math.max(0, currentIndex - 1), isPlaying)}
             disabled={currentIndex === 0}
-            className="rounded-md border border-white/15 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-xl border border-white/15 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
           >
             Previous
           </button>
@@ -74,7 +74,7 @@ const ShowSequencePlayer = ({ items }: ShowSequencePlayerProps) => {
             type="button"
             onClick={() => selectItem(Math.min(items.length - 1, currentIndex + 1), isPlaying)}
             disabled={currentIndex === items.length - 1}
-            className="rounded-md border border-white/15 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-xl border border-white/15 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next
           </button>
@@ -90,7 +90,7 @@ const ShowSequencePlayer = ({ items }: ShowSequencePlayerProps) => {
         onEnded={handleEnded}
         className="mt-4 w-full"
       />
-      <p className="mt-2 text-xs text-zinc-500">When an item ends, the next one starts automatically in lineup order.</p>
+      <p className="mt-2 text-xs text-paper/35">When an item ends, the next one starts automatically in lineup order.</p>
     </section>
   );
 };
