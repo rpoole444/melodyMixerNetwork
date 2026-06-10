@@ -458,6 +458,20 @@ export const api = {
     return normalizeUser(await handleResponse(response));
   },
 
+  async uploadProfileImage(userId: number, file: File, onProgress?: (percent: number) => void): Promise<ApiUser> {
+    const formData = new FormData();
+    formData.append("profile_image", file);
+
+    const payload = await xhrRequest<any>(
+      `${API_BASE_URL}/users/${userId}/profile_image`,
+      "PATCH",
+      formData,
+      onProgress,
+    );
+
+    return normalizeUser(payload);
+  },
+
   async listAudioFiles(scope?: "mine"): Promise<AudioFileRecord[]> {
     const query = scope ? `?scope=${scope}` : "";
     const response = await authFetch(`${API_BASE_URL}/audio_files${query}`, {

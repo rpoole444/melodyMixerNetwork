@@ -2,8 +2,9 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { useUser } from "@/contexts/UserContext";
 import { ApiUser, PlaylistRecord, api } from "@/lib/api";
+import { validateProfileImage } from "@/lib/profileImageValidation";
 import { formatStationDateTime } from "@/lib/stationTime";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 
 const emptyProfile: ApiUser = {
   hostName: "",
@@ -29,15 +30,25 @@ const showStatusCopy: Record<PlaylistRecord["status"], string> = {
 const showStatusOrder: PlaylistRecord["status"][] = ["needs_edits", "draft", "submitted", "ready", "scheduled", "aired", "rejected"];
 
 const UserProfile = () => {
-  const { user, updateUser, error } = useUser();
+  const { user, updateUser, uploadProfileImage, error } = useUser();
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState<ApiUser>(user || emptyProfile);
   const [shows, setShows] = useState<PlaylistRecord[]>([]);
   const [showsMessage, setShowsMessage] = useState("");
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState("");
+  const [profileImageMessage, setProfileImageMessage] = useState("");
+  const [profileImageProgress, setProfileImageProgress] = useState<number | null>(null);
 
   useEffect(() => {
     setDraft(user || emptyProfile);
   }, [user]);
+
+  useEffect(() => {
+    return () => {
+      if (profileImagePreview) URL.revokeObjectURL(profileImagePreview);
+    };
+  }, [profileImagePreview]);
 
   useEffect(() => {
     loadMyShows();
@@ -78,6 +89,51 @@ const UserProfile = () => {
     setIsEditing(false);
   };
 
+  const handleProfileImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    const validationMessage = validateProfileImage(file);
+    if (validationMessage) {
+      setProfileImageMessage(validationMessage);
+      return;
+    }
+
+    if (profileImagePreview) URL.revokeObjectURL(profileImagePreview);
+    setProfileImageFile(file);
+    setProfileImagePreview(URL.createObjectURL(file));
+    setProfileImageMessage("Preview ready. Use this photo when it looks right.");
+    setProfileImageProgress(null);
+  };
+
+  const saveProfileImage = async () => {
+    if (!profileImageFile) return;
+
+    setProfileImageMessage("Uploading your new profile picture...");
+    setProfileImageProgress(0);
+    try {
+      const savedUser = await uploadProfileImage(profileImageFile, setProfileImageProgress);
+      setDraft(savedUser);
+      setProfileImageFile(null);
+      if (profileImagePreview) URL.revokeObjectURL(profileImagePreview);
+      setProfileImagePreview("");
+      setProfileImageMessage("Profile picture updated. You can replace it again whenever you like.");
+      setProfileImageProgress(100);
+    } catch (uploadError) {
+      setProfileImageMessage(uploadError instanceof Error ? uploadError.message : "Could not upload that image.");
+      setProfileImageProgress(null);
+    }
+  };
+
+  const cancelProfileImage = () => {
+    if (profileImagePreview) URL.revokeObjectURL(profileImagePreview);
+    setProfileImageFile(null);
+    setProfileImagePreview("");
+    setProfileImageMessage("");
+    setProfileImageProgress(null);
+  };
+
   return (
     <main className="min-h-screen bg-ink text-white">
       <Header title="Host Profile" />
@@ -100,16 +156,43 @@ const UserProfile = () => {
             <div className="flex flex-col gap-5 sm:flex-row lg:flex-col">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={draft.profileImage || "/hostpic.jpg"}
+                src={profileImagePreview || draft.profileImage || "/hostpic.jpg"}
                 alt={`${draft.hostName} profile`}
                 width={220}
                 height={220}
-                className="aspect-square rounded-xl object-cover"
+                className="aspect-square w-full max-w-[220px] rounded-xl border border-paper/10 object-cover"
               />
               <div>
                 <h2 className="text-2xl font-semibold">{draft.firstName} {draft.lastName}</h2>
                 <p className="mt-2 text-paper/70">{draft.email}</p>
                 <p className="text-paper/70">{draft.phone || "No phone number"}</p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <label className="cursor-pointer rounded-xl bg-signal px-4 py-3 font-semibold text-ink hover:bg-[#ff7658]">
+                    {draft.profileImage ? "Choose Another Photo" : "Choose Profile Photo"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleProfileImageChange}
+                      className="sr-only"
+                    />
+                  </label>
+                  {profileImageFile && (
+                    <>
+                      <button type="button" onClick={saveProfileImage} className="rounded-xl border border-signal px-4 py-3 font-semibold text-cream hover:bg-signal/10">
+                        Use This Photo
+                      </button>
+                      <button type="button" onClick={cancelProfileImage} className="rounded-xl border border-paper/15 px-4 py-3 text-paper/70 hover:text-cream">
+                        Cancel
+                      </button>
+                    </>
+                  )}
+                </div>
+                {profileImageProgress !== null && profileImageProgress < 100 && (
+                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-paper/10" aria-label={`Profile image upload ${profileImageProgress}%`}>
+                    <div className="h-full bg-signal transition-[width]" style={{ width: `${profileImageProgress}%` }} />
+                  </div>
+                )}
+                {profileImageMessage && <p className="mt-3 text-sm text-paper/60">{profileImageMessage}</p>}
                 <button
                   onClick={() => setIsEditing((editing) => !editing)}
                   className="mt-5 rounded-xl border border-white/15 px-4 py-3 font-semibold text-white hover:border-signal"

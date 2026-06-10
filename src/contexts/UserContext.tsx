@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { api, ApiUser } from "@/lib/api";
 
 type AuthStatus = "idle" | "loading" | "authenticated" | "error";
@@ -10,6 +10,7 @@ interface UserContextProps {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: ApiUser) => Promise<void>;
+  uploadProfileImage: (file: File, onProgress?: (percent: number) => void) => Promise<ApiUser>;
 }
 
 const UserContext = createContext<UserContextProps | undefined>(undefined);
@@ -81,10 +82,17 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const value = useMemo(
-    () => ({ user, status, error, login, logout, updateUser }),
-    [user, status, error],
-  );
+  const uploadProfileImage = async (file: File, onProgress?: (percent: number) => void) => {
+    if (!user?.id) throw new Error("Sign in before changing your profile picture.");
+
+    setError("");
+    const savedUser = await api.uploadProfileImage(user.id, file, onProgress);
+    setUser(savedUser);
+    setStatus("authenticated");
+    return savedUser;
+  };
+
+  const value = { user, status, error, login, logout, updateUser, uploadProfileImage };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
